@@ -1,0 +1,467 @@
+#include <TTree.h>
+#include <TFile.h>
+#include <vector>
+#include <TH1.h>
+#include <TAxis.h>
+#include <TROOT.h>
+#include <TCanvas.h>
+#include <TLegend.h>
+#include <TStyle.h>
+#include <TPaveText.h>
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <stdio.h>
+#include <math.h>
+#include <algorithm>
+
+void MakePlots()
+{
+   gROOT->SetBatch(1);
+   gStyle->SetOptStat(0);
+
+   // Printing current value of the gravitino mass
+   //ot << mG << " " << tauG;
+
+   // Open files with stable final state particles from different gravitino decay modes   
+   TFile *f1=TFile::Open("outputs/Wtau_mG.root");
+   TFile *f2=TFile::Open("outputs/We_mG.root");
+   TFile *f3=TFile::Open("outputs/Wmu_mG.root");
+   TFile *f4=TFile::Open("outputs/Znu_mG.root");
+   //TFile *f5=TFile::Open("outputs/Gammanu_mG.root");
+   //TFile *f6=TFile::Open("outputs/GammaOffnu_mG.root");
+   TFile *f7=TFile::Open("outputs/Hnu_mG.root");
+   TFile *f0=new TFile("outputs/combined_mG.root","recreate");
+
+   std::cout << "Seg fault is below this line " << std::endl;
+
+   // Create pointers to store dN/dE and E^2dN/dE histograms
+   TH1F *h[20],*h2[20],*hgamma[6], *helect[6], *hposit[6], *hantip[6];
+   stringstream name;
+
+   // Using customized logarithmically spacing bins (currently using 50 bins between 0.1 and 100)
+   double bins[50] = { 0.1, 0.11513954, 0.13257114, 0.1526418, 0.17575106, 0.20235896, 0.23299518, 0.26826958, 0.30888436, 0.35564803, 0.40949151, 0.47148664, 0.54286754, 0.62505519, 0.71968567\
+                     , 0.82864277, 0.95409548, 1.09854114, 1.26485522, 1.45634848, 1.67683294, 1.93069773, 2.22299648, 2.55954792, 2.9470517, 3.39322177, 3.90693994, 4.49843267, 5.17947468, \
+                       5.96362332, 6.86648845, 7.90604321, 9.10298178, 10.48113134, 12.06792641, 13.89495494, 15.9985872, 18.42069969, 21.20950888, 24.42053095, 28.11768698, 32.37457543, 37.2759372, \
+                       42.9193426, 49.41713361, 56.89866029, 65.51285569, 75.43120063, 86.85113738, 100.0};
+
+   double bins2[120] = {  1.00000000e-04,   1.08047182e-04,   1.16741936e-04,   1.26136372e-04,\
+   1.36286796e-04,   1.47254043e-04,   1.59103844e-04,   1.71907220e-04,\
+   1.85740907e-04,   2.00687817e-04,   2.16837531e-04,   2.34286842e-04,\
+   2.53140332e-04,   2.73510995e-04,   2.95520924e-04,   3.19302031e-04,\
+   3.44996847e-04,   3.72759372e-04,   4.02755998e-04,   4.35166507e-04,\
+   4.70185149e-04,   5.08021805e-04,   5.48903245e-04,   5.93074490e-04,\
+   6.40800274e-04,   6.92366640e-04,   7.48082646e-04,   8.08282219e-04,\
+   8.73326162e-04,   9.43604310e-04,   1.01953787e-03,   1.10158194e-03,\
+   1.19022824e-03,   1.28600808e-03,   1.38949549e-03,   1.50131073e-03,\
+   1.62212394e-03,   1.75265921e-03,   1.89369889e-03,   2.04608829e-03,\
+   2.21074074e-03,   2.38864308e-03,   2.58086154e-03,   2.78854817e-03,\
+   3.01294772e-03,   3.25540512e-03,   3.51737350e-03,   3.80042296e-03,\
+   4.10624992e-03,   4.43668733e-03,   4.79371565e-03,   5.17947468e-03,\
+   5.59627645e-03,   6.04661901e-03,   6.53320146e-03,   7.05894009e-03,\
+   7.62698586e-03,   8.24074331e-03,   8.90389094e-03,   9.62040327e-03,\
+   1.03945747e-02,   1.12310450e-02,   1.21348277e-02,   1.31113394e-02,\
+   1.41664327e-02,   1.53064314e-02,   1.65381678e-02,   1.78690243e-02,\
+   1.93069773e-02,   2.08606449e-02,   2.25393390e-02,   2.43531207e-02,\
+   2.63128607e-02,   2.84303046e-02,   3.07181430e-02,   3.31900880e-02,\
+   3.58609548e-02,   3.87467512e-02,   4.18647729e-02,   4.52337074e-02,\
+   4.88737463e-02,   5.28067057e-02,   5.70561576e-02,   6.16475706e-02,\
+   6.66084629e-02,   7.19685673e-02,   7.77600091e-02,   8.40174987e-02,\
+   9.07785399e-02,   9.80836545e-02,   1.05976625e-01,   1.14504757e-01,\
+   1.23719163e-01,   1.33675070e-01,   1.44432146e-01,   1.56054865e-01,\
+   1.68612884e-01,   1.82181470e-01,   1.96841945e-01,   2.12682175e-01,\
+   2.29797097e-01,   2.48289288e-01,   2.68269580e-01,   2.89857721e-01,\
+   3.13183101e-01,   3.38385515e-01,   3.65616014e-01,   3.95037801e-01,\
+   4.26827213e-01,   4.61174777e-01,   4.98286351e-01,   5.38384362e-01,\
+   5.81709133e-01,   6.28520327e-01,   6.79098503e-01,   7.33746797e-01,\
+   7.92792739e-01,   8.56590215e-01,   9.25521591e-01,   1.00000000e+00};
+
+
+   for(int i=0;i<5;i++)
+   {
+      name << "hgamma_" << i;
+      std::string temp = name.str();
+      hgamma[i] = new TH1F(temp.c_str(),"Spectrum",119,bins2);
+      name.str("");
+      name << "helect_" << i;
+      temp = name.str();
+      helect[i] = new TH1F(temp.c_str(),"Spectrum",119,bins2);
+      name.str("");
+      name << "hposit_" << i;
+      temp = name.str();
+      hposit[i] = new TH1F(temp.c_str(),"Spectrum",119,bins2);
+      name.str("");
+      name << "antip_" << i;
+      temp = name.str();
+      hantip[i] = new TH1F(temp.c_str(),"Spectrum",119,bins2);
+      name.str("");
+   }
+
+
+   // Get the trees stored on the files
+   TTree *t1=(TTree*)f1->Get("t");
+   TTree *t2=(TTree*)f2->Get("t");
+   TTree *t3=(TTree*)f3->Get("t");
+   TTree *t4=(TTree*)f4->Get("t");
+   //TTree *t5=(TTree*)f5->Get("t");
+   //TTree *t6=(TTree*)f6->Get("t");
+   TTree *t7=(TTree*)f7->Get("t");
+
+   gStyle->SetOptStat(11111);
+
+   // Define pointers to be filled with the branches contents
+   std::vector<float>* Ee1;
+   std::vector<float>* Ee2;
+   std::vector<float>* Ee3;
+   std::vector<float>* Ee4;
+   //std::vector<float>* Ee5;
+   //std::vector<float>* Ee6;
+   std::vector<float>* Ee7;
+
+   std::vector<float>* Ep1;
+   std::vector<float>* Ep2;
+   std::vector<float>* Ep3;
+   std::vector<float>* Ep4;
+   //std::vector<float>* Ep5;
+   //std::vector<float>* Ep6;
+   std::vector<float>* Ep7;
+
+   std::vector<float>* Eg1;
+   std::vector<float>* Eg2;
+   std::vector<float>* Eg3;
+   std::vector<float>* Eg4;
+   //std::vector<float>* Eg5;
+   //std::vector<float>* Eg6;
+   std::vector<float>* Eg7;
+
+   std::vector<float>* Eap1;
+   std::vector<float>* Eap2;
+   std::vector<float>* Eap3;
+   std::vector<float>* Eap4;
+   //std::vector<float>* Eap5;
+   //std::vector<float>* Eap6;
+   std::vector<float>* Eap7;
+
+
+   Ee1=0;Ee2=0;Ee3=0;Ee4=0;/*Ee5=0;Ee6=0;*/Ee7=0;
+   Ep1=0;Ep2=0;Ep3=0;Ep4=0;/*Ep5=0;Ep6=0;*/Ep7=0;
+   Eg1=0;Eg2=0;Eg3=0;Eg4=0;/*Eg5=0;Eg6=0;*/Eg7=0;
+   Eap1=0;Eap2=0;Eap3=0;Eap4=0;/*Eap5=0;Eap6=0;*/Eap7=0;
+
+
+   // Set branches addresses
+   t1->SetBranchAddress("E_e",&Ee1);
+   t2->SetBranchAddress("E_e",&Ee2);
+   t3->SetBranchAddress("E_e",&Ee3);
+   t4->SetBranchAddress("E_e",&Ee4);
+   //t5->SetBranchAddress("E_e",&Ee5);
+   //t6->SetBranchAddress("E_e",&Ee6);
+   t7->SetBranchAddress("E_e",&Ee7);
+
+   t1->SetBranchAddress("E_p",&Ep1);
+   t2->SetBranchAddress("E_p",&Ep2);
+   t3->SetBranchAddress("E_p",&Ep3);
+   t4->SetBranchAddress("E_p",&Ep4);
+   //t5->SetBranchAddress("E_p",&Ep5); 
+   //t6->SetBranchAddress("E_p",&Ep6);
+   t7->SetBranchAddress("E_p",&Ep7);
+
+   t1->SetBranchAddress("E_g",&Eg1);
+   t2->SetBranchAddress("E_g",&Eg2);
+   t3->SetBranchAddress("E_g",&Eg3);
+   t4->SetBranchAddress("E_g",&Eg4);
+   //t5->SetBranchAddress("E_g",&Eg5);
+   //t6->SetBranchAddress("E_g",&Eg6);
+   t7->SetBranchAddress("E_g",&Eg7);
+
+   t1->SetBranchAddress("E_ap",&Eap1);
+   t2->SetBranchAddress("E_ap",&Eap2);
+   t3->SetBranchAddress("E_ap",&Eap3);
+   t4->SetBranchAddress("E_ap",&Eap4);
+   //t5->SetBranchAddress("E_ap",&Eap5);
+   //t6->SetBranchAddress("E_ap",&Eap6);
+   t7->SetBranchAddress("E_ap",&Eap7);
+
+   // Get the total number of entries (all trees are supposed to have the same number of entries) 
+   std::vector<int> entries;
+   entries.push_back(t1->GetEntries());
+   entries.push_back(t2->GetEntries());
+   entries.push_back(t3->GetEntries());
+   entries.push_back(t4->GetEntries());
+   //entries.push_back(t5->GetEntries());
+   //entries.push_back(t6->GetEntries());
+   entries.push_back(t7->GetEntries());
+
+   Int_t nEntries=*std::max_element(entries.begin(),entries.end());
+
+   std::cout << " nEntries t1 " << t1->GetEntries() << std::endl;
+   std::cout << " nEntries t2 " << t2->GetEntries() << std::endl; 
+   std::cout << " nEntries t3 " << t3->GetEntries() << std::endl; 
+   std::cout << " nEntries t4 " << t4->GetEntries() << std::endl; 
+   //std::cout << " nEntries t5 " << t5->GetEntries() << std::endl; 
+   //std::cout << " nEntries t6 " << t6->GetEntries() << std::endl;
+   std::cout << " nEntries t7 " << t7->GetEntries() << std::endl;
+
+   // Will use these variables as counters of the numbers of produced gravitinos
+   //int eEvWtau=0,eEvWmu=0,eEvWe=0,eEvZnu=0,pEvWtau=0,pEvWmu=0,pEvWe=0,pEvZnu=0,gEvWtau=0,gEvWmu=0,gEvWe=0,gEvZnu=0,eEvHnu=0,pEvHnu=0,gEvHnu=0;
+
+   std::cout << "Now running for mass: " << mG << std::endl;
+
+   for(int ientry=0;ientry<nEntries;ientry++)
+   {
+      if(ientry <= t1->GetEntries()) t1->GetEntry(ientry);
+      if(ientry <= t2->GetEntries()) t2->GetEntry(ientry);
+      if(ientry <= t3->GetEntries()) t3->GetEntry(ientry);
+      if(ientry <= t4->GetEntries()) t4->GetEntry(ientry);
+      //if(ientry <= t5->GetEntries()) t5->GetEntry(ientry);
+      //if(ientry <= t6->GetEntries()) t6->GetEntry(ientry);
+      if(ientry <= t7->GetEntries()) t7->GetEntry(ientry);
+
+      // For each tree entry check if there is at least one electron,photon or positron (and count it as a gravitino decay)
+      /*if(Ee1->size()!=0 && ientry <= t1->GetEntries()) eEvWtau++;if(Ep1->size()!=0) pEvWtau++;if(Eg1->size()!=0) gEvWtau++;
+      if(Ee2->size()!=0 && ientry <= t2->GetEntries()) eEvWe++;if(Ep2->size()!=0) pEvWe++;if(Eg2->size()!=0) gEvWe++;
+      if(Ee3->size()!=0 && ientry <= t3->GetEntries()) eEvWmu++;if(Ep3->size()!=0) pEvWmu++;if(Eg3->size()!=0) gEvWmu++;
+      if(Ee4->size()!=0 && ientry <= t4->GetEntries()) eEvZnu++;if(Ep4->size()!=0) pEvZnu++;if(Eg4->size()!=0) gEvZnu++;
+      if(Ee5->size()!=0 && ientry <= t5->GetEntries()) eEvGn++;if(Ep5->size()!=0) pEvGn++;if(Eg5->size()!=0) gEvGn++;
+      if(Ee6->size()!=0 && ientry <= t6->GetEntries()) eEvGn3b++;if(Ep6->size()!=0) pEvGn3b++;if(Eg6->size()!=0) gEvGn3b++;
+      if(Ee7->size()!=0 && ientry <= t7->GetEntries()) eEvHnu++;if(Ep7->size()!=0) pEvHnu++;if(Eg7->size()!=0) gEvHnu++;*/
+
+      // Fill the corresponding histograms for each particular decay mode and for each particle type 
+      // For electrons,positrons,photons and antiprotons
+      if(ientry <= t1->GetEntries()){
+         for(size_t i=0;i<Ee1->size();i++) helect[0]->Fill(2*Ee1->at(i)/mG);
+         for(size_t i=0;i<Ep1->size();i++) hposit[0]->Fill(2*Ep1->at(i)/mG);
+         for(size_t i=0;i<Eg1->size();i++) hgamma[0]->Fill(2*Eg1->at(i)/mG);
+         for(size_t i=0;i<Eap1->size();i++) hantip[0]->Fill(2*Eap1->at(i)/mG);
+      }
+      if(ientry <= t2->GetEntries()){
+         for(size_t i=0;i<Ee2->size();i++) helect[1]->Fill(2*Ee2->at(i)/mG);
+         for(size_t i=0;i<Ep2->size();i++) hposit[1]->Fill(2*Ep2->at(i)/mG);
+         for(size_t i=0;i<Eg2->size();i++) hgamma[1]->Fill(2*Eg2->at(i)/mG);
+         for(size_t i=0;i<Eap2->size();i++) hantip[1]->Fill(2*Eap2->at(i)/mG);
+      }
+      if(ientry <= t3->GetEntries()){
+         for(size_t i=0;i<Ee3->size();i++) helect[2]->Fill(2*Ee3->at(i)/mG);
+         for(size_t i=0;i<Ep3->size();i++) hposit[2]->Fill(2*Ep3->at(i)/mG);
+         for(size_t i=0;i<Eg3->size();i++) hgamma[2]->Fill(2*Eg3->at(i)/mG);
+         for(size_t i=0;i<Eap3->size();i++) hantip[2]->Fill(2*Eap3->at(i)/mG);
+      }
+      if(ientry <= t4->GetEntries()){
+         for(size_t i=0;i<Ee4->size();i++) helect[3]->Fill(2*Ee4->at(i)/mG);
+         for(size_t i=0;i<Ep4->size();i++) hposit[3]->Fill(2*Ep4->at(i)/mG);
+         for(size_t i=0;i<Eg4->size();i++) hgamma[3]->Fill(2*Eg4->at(i)/mG);
+         for(size_t i=0;i<Eap4->size();i++) hantip[3]->Fill(2*Eap4->at(i)/mG);
+      }
+      /*if(ientry <= t5->GetEntries()){
+         for(size_t i=0;i<Ee5->size();i++) h[4]->Fill(Ee5->at(i));
+         for(size_t i=0;i<Ep5->size();i++) h[10]->Fill(Ep5->at(i));
+         for(size_t i=0;i<Eg5->size();i++) h[16]->Fill(Eg5->at(i));
+      }
+      if(ientry <= t6->GetEntries()){
+         for(size_t i=0;i<Ee6->size();i++) helect[4]->Fill(2*Ee6->at(i)/mG);
+         for(size_t i=0;i<Ep6->size();i++) hposit[4]->Fill(2*Ep6->at(i)/mG);
+         for(size_t i=0;i<Eg6->size();i++) hgamma[4]->Fill(2*Eg6->at(i)/mG);
+      }*/
+      if(ientry <= t7->GetEntries()){
+         for(size_t i=0;i<Ee7->size();i++) helect[4]->Fill(2*Ee7->at(i)/mG);
+         for(size_t i=0;i<Ep7->size();i++) hposit[4]->Fill(2*Ep7->at(i)/mG);
+         for(size_t i=0;i<Eg7->size();i++) hgamma[4]->Fill(2*Eg7->at(i)/mG);
+         for(size_t i=0;i<Eap7->size();i++) hantip[4]->Fill(2*Eap7->at(i)/mG);
+      }
+   }
+
+   //std::cout << "name " << name.str().c_str() << std::endl;
+   TCanvas *c=new TCanvas("c","",1000,1000,1000,1000);
+
+   c->SetLogy();c->SetLogx();
+
+   stringstream hname,tname,mass;
+
+   std::vector<string> names;
+   std::vector<string> name0;
+
+   names.push_back("W#tau");
+   names.push_back("We");
+   names.push_back("W#mu");
+   names.push_back("Z#nu");
+   //names.push_back("#gamma^{*}#nu");
+   names.push_back("H#nu");
+
+   name0.push_back("Wtau");
+   name0.push_back("We");
+   name0.push_back("Wmu");
+   name0.push_back("Znu");
+   //name0.push_back("gnu");
+   name0.push_back("Hnu");
+
+   TPaveText *pt = new TPaveText(0.15,0.75,0.3,0.85,"NDC");
+   TPaveText *pt0 = new TPaveText(0.35,0.75,0.5,0.85,"NDC");
+   //std::cout << "TPaveText " << names.at(i) << std::endl;
+
+   TLegend *l=new TLegend(0.15,0.55,0.3,0.7);
+   l->SetBorderSize(0);
+
+   for(int i=0;i<5;i++){
+     //tname << "/home/edson/Dropbox/Gravitino_Bounds/DnDe_new/dnde_gamma_" << name0.at(i) << "_" << mG << ".txt";
+     tname << "outputs/dnde_gamma_" << name0.at(i) << "_" << mG << ".txt";
+     std::ofstream ot(tname.str().c_str());
+     hgamma[i]->GetXaxis()->SetRangeUser(1e-4,1);
+     hgamma[i]->GetXaxis()->SetRangeUser(1e-5,1.0);
+     hgamma[i]->Scale(1./entries.at(i));
+     hgamma[i]->SetTitle("");
+     hgamma[i]->GetXaxis()->SetTitle("x=2E/m_{#tilde{G}}");
+     hgamma[i]->GetXaxis()->SetTitleOffset(1.2);
+     hgamma[i]->GetYaxis()->SetTitle("dN/dLogx");
+     hgamma[i]->GetYaxis()->SetTitleOffset(1.2);
+     hgamma[i]->SetMarkerStyle(8);
+     hgamma[i]->SetMarkerColor(i+1);
+     if(i==0) hgamma[i]->Draw("ph");
+     else hgamma[i]->Draw("ph:same");
+     l->AddEntry(hgamma[i],name0.at(i).c_str(),"p");
+     for (UInt_t j=1;j<hgamma[i]->GetXaxis()->GetNbins()+2;j++) {
+        ot << hgamma[i]->GetBinCenter(j) << " " << log(10)*sqrt(hgamma[i]->GetBinLowEdge(j)*(hgamma[i]->GetBinLowEdge(j)+hgamma[i]->GetBinWidth(j)))*hgamma[i]->GetBinContent(j)/hgamma[i]->GetBinWidth(j) << std::endl;
+        //ot << hgamma[i]->GetBinCenter(j) << " " << hgamma[i]->GetBinContent(j) << std::endl;
+     }
+     ot.close();
+     tname.str("");
+   }
+
+   l->Draw();
+   pt0->Draw();
+   pt0->AddText("m_{#tilde{G}} = mG GeV");
+
+   hname << "outputs/plotgammax_" << mG << ".eps";
+
+   c->SaveAs(hname.str().c_str());
+   c->Modified();
+   c->Update();
+
+   TLegend *le=new TLegend(0.15,0.55,0.3,0.7);
+   le->SetBorderSize(0);
+
+   for(int i=0;i<5;i++){
+     tname << "outputs/dnde_elect_" << name0.at(i) << "_" << mG << ".txt";
+     //tname << "/home/edson/Dropbox/Gravitino_Bounds/DnDe_new/dnde_elect_" << name0.at(i) << "_" << mG << ".txt";
+     std::ofstream ote(tname.str().c_str());
+     helect[i]->GetXaxis()->SetRangeUser(1e-4,1.0);
+     helect[i]->GetXaxis()->SetRangeUser(1e-5,1.4);
+     helect[i]->Scale(1./entries.at(i));
+     helect[i]->SetTitle("");
+     helect[i]->GetXaxis()->SetTitle("x=2E/m_{#tilde{G}}");
+     helect[i]->GetXaxis()->SetTitleOffset(1.2);
+     helect[i]->GetYaxis()->SetTitle("dN/dLogx");
+     helect[i]->GetYaxis()->SetTitleOffset(1.2);
+     helect[i]->SetMarkerStyle(8);
+     helect[i]->SetMarkerColor(i+1);
+     if(i==0) helect[i]->Draw("ph");
+     else helect[i]->Draw("ph:same");
+     le->AddEntry(helect[i],name0.at(i).c_str(),"p");
+     for (UInt_t j=1;j<helect[i]->GetXaxis()->GetNbins()+2;j++) {
+        ote << helect[i]->GetBinCenter(j) << " " << log(10)*sqrt(helect[i]->GetBinLowEdge(j)*(helect[i]->GetBinLowEdge(j)+helect[i]->GetBinWidth(j)))*helect[i]->GetBinContent(j)/helect[i]->GetBinWidth(j) << std::endl;
+     }
+     ote.close();
+     tname.str("");
+   }
+
+   le->Draw();
+   pt0->Draw();
+   //pt0->AddText("m_{#tilde{G}} = mG GeV");
+
+   hname.str("");
+
+   hname << "outputs/plotelectx_" << mG << ".eps";
+
+   c->SaveAs(hname.str().c_str());
+   c->Modified();
+   c->Update();
+
+   TLegend *lp=new TLegend(0.15,0.55,0.3,0.7);
+   lp->SetBorderSize(0);
+
+   for(int i=0;i<5;i++){
+     tname << "outputs/dnde_posit_" << name0.at(i) << "_" << mG << ".txt";
+     //tname << "/home/edson/Dropbox/Gravitino_Bounds/DnDe_new/dnde_posit_" << name0.at(i) << "_" << mG << ".txt";
+     std::ofstream ott(tname.str().c_str());
+     hposit[i]->GetXaxis()->SetRangeUser(1e-4,1.0);
+     hposit[i]->GetXaxis()->SetRangeUser(1e-5,1.0);
+     hposit[i]->Scale(1./entries.at(i));
+     hposit[i]->SetTitle("");
+     hposit[i]->GetXaxis()->SetTitle("x=2E/m_{#tilde{G}}");
+     hposit[i]->GetXaxis()->SetTitleOffset(1.2);
+     hposit[i]->GetYaxis()->SetTitle("dN/dLogx");
+     hposit[i]->GetYaxis()->SetTitleOffset(1.2);
+     hposit[i]->SetMarkerStyle(8);
+     hposit[i]->SetMarkerColor(i+1);
+     if(i==0) hposit[i]->Draw("ph");
+     else hposit[i]->Draw("ph:same");
+     lp->AddEntry(hposit[i],name0.at(i).c_str(),"p");
+     for (UInt_t j=1;j<hposit[i]->GetXaxis()->GetNbins()+2;j++) {
+        ott << hposit[i]->GetBinCenter(j) << " " << log(10)*sqrt(hposit[i]->GetBinLowEdge(j)*(hposit[i]->GetBinLowEdge(j)+hposit[i]->GetBinWidth(j)))*hposit[i]->GetBinContent(j)/hposit[i]->GetBinWidth(j) << std::endl;
+     }
+     ott.close();
+     tname.str("");
+   }
+
+
+   lp->Draw();
+   pt0->Draw();
+   //pt0->AddText("m_{#tilde{G}} = mG GeV");
+
+   hname.str("");
+
+   hname << "outputs/plotpositx_" << mG << ".eps";
+
+   c->SaveAs(hname.str().c_str());
+   c->Modified();
+   c->Update();
+
+   TLegend *lap=new TLegend(0.15,0.55,0.3,0.7);
+   lap->SetBorderSize(0);
+
+   for(int i=0;i<5;i++){
+     tname << "outputs/dnde_antip_" << name0.at(i) << "_" << mG << ".txt";
+     //tname << "/home/edson/Dropbox/Gravitino_Bounds/DnDe_new/dnde_antip_" << name0.at(i) << "_" << mG << ".txt";
+     std::ofstream otp(tname.str().c_str());
+     hantip[i]->GetXaxis()->SetRangeUser(1e-4,1.0);
+     hantip[i]->GetXaxis()->SetRangeUser(1e-5,1.0);
+     hantip[i]->Scale(1./entries.at(i));
+     hantip[i]->SetTitle("");
+     hantip[i]->GetXaxis()->SetTitle("x=2E/m_{#tilde{G}}");
+     hantip[i]->GetXaxis()->SetTitleOffset(1.2);
+     hantip[i]->GetYaxis()->SetTitle("dN/dLogx");
+     hantip[i]->GetYaxis()->SetTitleOffset(1.2);
+     hantip[i]->SetMarkerStyle(8);
+     hantip[i]->SetMarkerColor(i+1);
+     if(i==0) hantip[i]->Draw("ph");
+     else hantip[i]->Draw("ph:same");
+     lap->AddEntry(hantip[i],name0.at(i).c_str(),"p");
+     for (UInt_t j=1;j<hantip[i]->GetXaxis()->GetNbins()+2;j++) {
+        otp << hantip[i]->GetBinCenter(j) << " " << log(10)*sqrt(hantip[i]->GetBinLowEdge(j)*(hantip[i]->GetBinLowEdge(j)+hantip[i]->GetBinWidth(j)))*hantip[i]->GetBinContent(j)/hantip[i]->GetBinWidth(j) << std::endl;
+     }
+     otp.close();
+     tname.str("");
+   }
+
+
+   lap->Draw();
+   pt0->Draw();
+   //pt0->AddText("m_{#tilde{G}} = mG GeV");
+
+   hname.str("");
+
+   hname << "outputs/plotantipx_" << mG << ".eps";
+
+   c->SaveAs(hname.str().c_str());
+   c->Modified();
+   c->Update();
+
+
+   f0->Write();
+   f0->Close();
+
+
+}
+
+

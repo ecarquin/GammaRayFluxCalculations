@@ -1,0 +1,22 @@
+#!/bin/bash
+
+mG = 1000
+Channels = ["MuAMuNue","EAENue","TauATauNue","TauAMuNue","ATauMuNue","EATauNue","AETauNue","EAMuNue",""]
+
+!!999999:addChannel = 1 0.15 100 13 -13 12 !  -> MuAMuNue  //Using nue for all final states it doesn't make any difference
+!!999999:addChannel = 1 0.15 100 11 -11 12 !  -> EAENue
+!!999999:addChannel = 1 0.15 100 15 -15 12 !  -> TauATauNue
+!!999999:addChannel = 1 0.15 100 15 -13 12 !  -> TauAMuNue
+!!999999:addChannel = 1 0.15 100 -15 13 12 !  -> ATauMuNue
+!!999999:addChannel = 1 0.15 100 11 -15 12 !  -> EATauNue
+!!999999:addChannel = 1 0.15 100 -11 15 12 !  -> AETauNue
+!!999999:addChannel = 1 0.15 100 11 -13 12 !  -> EAMuNue
+!!999999:addChannel = 1 0.15 100 -11 13 12 !  -> AEMuNue
+
+
+for i in range (0,7)
+  mG = mG + 500*i
+  print "Gravitino mass: ",mG
+  os.system('sed 's/mG/'+mG+'/g' main07.cmnd.temp > main07.cmnd.temp.1')
+  for i in range (0,9)
+    

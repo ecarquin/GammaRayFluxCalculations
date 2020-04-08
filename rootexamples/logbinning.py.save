@@ -1,0 +1,9 @@
+import pylab as pl
+import numpy as np
+
+data = np.random.uniform(1e-5,1.0,size=10000)
+pl.hist(data, bins=np.logspace(-1, 2.0, 50))
+pl.gca().set_xscale("log")
+bins = np.logspace(-1,2.0,50)
+print bins
+pl.show()

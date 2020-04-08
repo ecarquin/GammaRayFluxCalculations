@@ -1,0 +1,85 @@
+#include "TFile.h"
+#include "TCanvas.h"
+#include "TH1.h"
+#include "TF1.h"
+#include "TGraph.h"
+
+#include <iostream>
+#include <string>
+#include <fstream>
+
+void getFlux()
+{
+
+   TF1 *f0 = new TF1("f0","9.6e-6*pow(1.0e3*x,-0.41)",0,100);
+
+   ifstream myfile;
+   myfile.open ("FermiFluxTableCut.txt");
+   float upflux[300],E[300],DE[300],EFlux[300];
+
+   int j=0;
+   while (!myfile.eof()) {
+     myfile >> E[j] >> upflux[j];
+     j++;
+   }
+
+   for(int k=0;k<j;k++) {if(E[j]!=0) DE[k]=E[k+1]-E[k];EFlux[k]=E[k]*E[k]*upflux[k]*1e-9/DE[k];std::cout << "e-flux" << EFlux[k] << "DE " << DE[k] << " E " << E[k] << std::endl;}
+
+   TGraph *l = new TGraph(j,E,EFlux);
+
+   float mG[10]={25.5167,40.1772,52.3495,58.9631,63.3216,71.9567,78.0881,83.0635,90.7892,96.8327};
+   float tau_G[10]={25.2254,24.1564,23.9428,23.3798,22.9731,22.6319,22.3114,21.9915,21.4196,20.7776}; 
+   float Gnu[10]={0.00016856542274355113,0.0010993598140324335,0.0062276806866023195,2.3220081699144752e-06,8.311288960716904e-05,0.00012056237077877326,0.00011474688149140103,9.727929446923651e-05,3.438426110656486e-06,1.8326912577997526e-06};
+
+   TFile *f[10];
+   TH1F *h[10];
+
+   tauG[10] = {0};
+
+   stringstream filename,histname;
+
+   TH1F *g[10]; new TH1F("g","Flux",100,0,100);
+
+   TCanvas *c=new TCanvas("c","",1000,1000,1000,1000);
+   c->Draw();
+
+   for (int i=0;i<10;i++)
+   {
+       std::cout << " Now working on the pint " << mG[i] << " " << tauG[i] << " " << Gnu[i] << std::endl;
+       filename << "outputs/combined_" << mG[i] << std::endl;
+
+       histname << "h_" << i <<;
+
+       std::cout << filename << std::endl;
+
+       h[i]=(TH1F*)f[i]->Get("h2_12");
+
+       g[i]=new TH1F(histname.str().c_str(),"Flux",100,0,100);
+
+       float tauG = pow(10,tau_G[i])/Gnu[i];
+
+       double fluxFactor = (2*2.08e23)/(8*3.14*mG[i]*tauG);
+
+       for(int j=0; j<h[i]->GetXaxis()->GetNbins();j++)
+       {
+          if(h[j]->GetBinContent(j) != 0) {
+             g[j]->SetBinContent(j,fluxFactor*h[j]->GetBinContent(j));
+             std::cout << fluxFactor << " " << h[j]->GetBinContent(j) << std::endl;
+          }
+       }
+
+       g[i]->SetMarkerStyle(8);
+       g[i]->SetMarkerColor(i);
+       g[i]->GetYaxis()->SetRangeUser(1e-10,1e-3);
+       g[i]->Draw("p");
+       f0->Draw("l:same");
+       l->Draw("l:same");
+
+       filename.str("");
+       histname.str("");
+       
+   }
+
+   c->SetLogy();
+   c->SaveAs("outputs/photonflux_mG.png");   
+}

@@ -1,0 +1,76 @@
+! main07.cmnd.
+! This file contains commands to be read in for a Pythia8 run.
+! Lines not beginning with a letter or digit are comments.
+
+! 1) Settings used in the main program.
+Main:numberOfEvents=1000000         ! number of events to generate
+Main:timesAllowErrors = 5          ! allow a few failures before quitting
+
+! 2) Settings related to output in init(), next() and stat().
+Init:showChangedSettings = on      ! list changed settings
+Init:showChangedParticleData = on  ! list changed particle data
+Next:numberCount = 100             ! print message every n events
+Next:numberShowInfo = 1            ! print event information n times
+Next:numberShowProcess = 10         ! print process record n times
+Next:numberShowEvent = 0           ! print event record n times
+
+! 3) Beam parameter settings. Incoming beams do not radiate.
+Beams:idA = -11                    ! ficititious incoming e+
+Beams:idB = 11                     ! ficititious incoming e-
+PDF:lepton = off                   ! no radiation off ficititious e+e-
+Beams:eCM = 3500                   ! CM energy of collision
+!Beams:eCM = 100                   ! CM energy of collision
+
+!!TimeShower:mMaxGamma=0.001
+!!WeakZ0:gmZmode=2
+!!WeakZ0:gmZmode=1
+
+! 4) Set up properties of the GeneralResonance and its decay channels.
+! id:all = name antiName spinType chargeType colType m0 mWidth mMin mMax tau0
+999999:all = GeneralResonance void 1 0 0 3500 1. 0. 0. 0.
+!999999:all = GeneralResonance void 1 0 0 100 1. 0. 0. 0.
+999999:isResonance = on
+! id:addChannel = onMode bRatio meMode product1 product2 ...
+! Note: sum of branching ratios automatically rescaled to 1.
+! Current channels illustrative only; insert your own decay list.
+!999999:addChannel = 1 0.15 101 1 -1   !  -> d dbar
+!999999:addChannel = 1 0.15 101 6 -6   !  -> t tbar
+!999999:addChannel = 1 0.15 101 15 -15 !  -> tau- tau+
+!999999:addChannel = 1 1.15 101 21 21  !  -> g g
+!999999:addChannel = 1 1.15 101 22 22  !  -> gamma gamma
+!#########################################################
+!########### My decay modes ##############################
+!#########################################################
+!!999999:addChannel = 1 0.15 100 24 15 !  -> Wtau
+!!999999:addChannel = 1 0.15 100 -24 -15 !  -> Wtau
+!!999999:addChannel = 1 0.15 100 24 13 !  -> Wmu
+!!999999:addChannel = 1 0.15 100 -24 -13 !  -> Wmu
+!!999999:addChannel = 1 0.15 100 24 11 !  -> We
+!!999999:addChannel = 1 0.15 100 -24 -11 !  -> We
+!!999999:addChannel = 1 0.15 100 23 16 !  -> Znu
+!!999999:addChannel = 1 0.15 101 22 16 !  -> gammanu
+!!999999:addChannel = 1 0.15 100 25 16 !  -> Hnu_tau
+!!999999:addChannel = 1 0.15 100 11 -11 12 !  -> Hnu_tau
+!!999999:addChannel = 1 0.15 100 13 -13 12 !  -> MuAMuNue  //Using nue for all final states it doesn't make any difference
+!!999999:addChannel = 1 0.15 100 11 -11 12 !  -> EAENue
+!!999999:addChannel = 1 0.15 100 15 -15 12 !  -> TauATauNue
+!!999999:addChannel = 1 0.15 100 15 -13 12 !  -> TauAMuNue
+!!999999:addChannel = 1 0.15 100 -15 13 12 !  -> ATauMuNue
+!!999999:addChannel = 1 0.15 100 11 -15 12 !  -> EATauNue
+!!999999:addChannel = 1 0.15 100 -11 15 12 !  -> AETauNue
+!!999999:addChannel = 1 0.15 100 11 -13 12 !  -> EAMuNue
+999999:addChannel = 1 0.15 100 -11 13 12 !  -> AEMuNue
+
+!999999:addChannel = 1 0.10 101 25 25  !  -> h0 h0
+
+!!23:mMin=20.
+!!23:offIfAny=3500
+
+! 5) Tell that also long-lived should decay.
+13:mayDecay   = true                 ! mu+-
+211:mayDecay  = true                 ! pi+-
+321:mayDecay  = true                 ! K+-
+130:mayDecay  = true                 ! K0_L
+2112:mayDecay = true                 ! n
+!23:mayDecay = true                   ! Z0
+!25:mayDecay   = true                 ! h0

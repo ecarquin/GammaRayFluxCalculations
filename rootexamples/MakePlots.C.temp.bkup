@@ -1,0 +1,801 @@
+#include <TTree.h>
+#include <TFile.h>
+#include <vector>
+#include <TH1.h>
+#include <TAxis.h>
+#include <TROOT.h>
+#include <TCanvas.h>
+#include <TLegend.h>
+#include <TStyle.h>
+#include <TPaveText.h>
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <stdio.h>
+#include <math.h>
+#include <algorithm>
+
+void MakePlots()
+{
+   gROOT->SetBatch(1);
+   gStyle->SetOptStat(0);
+
+   // Printing current value of the gravitino mass
+   //ot << mG << " " << tauG;
+
+   // Open files with stable final state particles from different gravitino decay modes   
+   TFile *f1=TFile::Open("outputs/Wtau_mG.root");
+   TFile *f2=TFile::Open("outputs/We_mG.root");
+   TFile *f3=TFile::Open("outputs/Wmu_mG.root");
+   TFile *f4=TFile::Open("outputs/Znu_mG.root");
+   TFile *f5=TFile::Open("outputs/Gammanu_mG.root");
+   TFile *f6=TFile::Open("outputs/GammaOffnu_mG.root");
+   TFile *f7=TFile::Open("outputs/Hnu_mG.root");
+   TFile *f0=new TFile("outputs/combined_mG.root","recreate");
+
+   std::cout << "Seg fault is below this line " << std::endl;
+
+   // Create pointers to store dN/dE and E^2dN/dE histograms
+   TH1F *h[20],*h2[20],*hgamma[6], *helect[6], *hposit[6];
+   stringstream name;
+
+   // Using customized logarithmically spacing bins (currently using 50 bins between 0.1 and 100)
+   double bins[50] = { 0.1, 0.11513954, 0.13257114, 0.1526418, 0.17575106, 0.20235896, 0.23299518, 0.26826958, 0.30888436, 0.35564803, 0.40949151, 0.47148664, 0.54286754, 0.62505519, 0.71968567\
+                     , 0.82864277, 0.95409548, 1.09854114, 1.26485522, 1.45634848, 1.67683294, 1.93069773, 2.22299648, 2.55954792, 2.9470517, 3.39322177, 3.90693994, 4.49843267, 5.17947468, \
+                       5.96362332, 6.86648845, 7.90604321, 9.10298178, 10.48113134, 12.06792641, 13.89495494, 15.9985872, 18.42069969, 21.20950888, 24.42053095, 28.11768698, 32.37457543, 37.2759372, \
+                       42.9193426, 49.41713361, 56.89866029, 65.51285569, 75.43120063, 86.85113738, 100.0};
+
+   double bins2[50] = {  1.00000000e-07 , 1.38949549e-07 , 1.93069773e-07 , 2.68269580e-07\
+                       , 3.72759372e-07 , 5.17947468e-07 , 7.19685673e-07 , 1.00000000e-06\
+                       , 1.38949549e-06 , 1.93069773e-06 , 2.68269580e-06 , 3.72759372e-06\
+                       , 5.17947468e-06 , 7.19685673e-06 , 1.00000000e-05 , 1.38949549e-05\
+                       , 1.93069773e-05 , 2.68269580e-05 , 3.72759372e-05 , 5.17947468e-05\
+                       , 7.19685673e-05 , 1.00000000e-04 , 1.38949549e-04 , 1.93069773e-04\
+                       , 2.68269580e-04 , 3.72759372e-04 , 5.17947468e-04 , 7.19685673e-04\
+                       , 1.00000000e-03 , 1.38949549e-03 , 1.93069773e-03 , 2.68269580e-03\
+                       , 3.72759372e-03 , 5.17947468e-03 , 7.19685673e-03 , 1.00000000e-02\
+                       , 1.38949549e-02 , 1.93069773e-02 , 2.68269580e-02 , 3.72759372e-02\
+                       , 5.17947468e-02 , 7.19685673e-02 , 1.00000000e-01 , 1.38949549e-01\
+                       , 1.93069773e-01 , 2.68269580e-01 , 3.72759372e-01 , 5.17947468e-01\
+                       , 7.19685673e-01 , 1.00000000e+00};
+
+  /*double bins2[200] = { 1.00000000e-07        , 1.08436597e-07        , 1.17584955e-07        , 1.27505124e-07\
+        , 1.38262217e-07        , 1.49926843e-07        , 1.62575567e-07        , 1.76291412e-07\
+        , 1.91164408e-07        , 2.07292178e-07        , 2.24780583e-07        , 2.43744415e-07\
+        , 2.64308149e-07        , 2.86606762e-07        , 3.10786619e-07        , 3.37006433e-07\
+        , 3.65438307e-07        , 3.96268864e-07        , 4.29700470e-07        , 4.65952567e-07\
+        , 5.05263107e-07        , 5.47890118e-07        , 5.94113398e-07        , 6.44236351e-07\
+        , 6.98587975e-07        , 7.57525026e-07        , 8.21434358e-07        , 8.90735464e-07\
+        , 9.65883224e-07        , 1.04737090e-06        , 1.13573336e-06        , 1.23155060e-06\
+        , 1.33545156e-06        , 1.44811823e-06        , 1.57029012e-06        , 1.70276917e-06\
+        , 1.84642494e-06        , 2.00220037e-06        , 2.17111795e-06        , 2.35428641e-06\
+        , 2.55290807e-06        , 2.76828663e-06        , 3.00183581e-06        , 3.25508860e-06\
+        , 3.52970730e-06        , 3.82749448e-06        , 4.15040476e-06        , 4.50055768e-06\
+        , 4.88025158e-06        , 5.29197874e-06        , 5.73844165e-06        , 6.22257084e-06\
+        , 6.74754405e-06        , 7.31680714e-06        , 7.93409667e-06        , 8.60346442e-06\
+        , 9.32930403e-06        , 1.01163798e-05        , 1.09698580e-05        , 1.18953407e-05\
+        , 1.28989026e-05        , 1.39871310e-05        , 1.51671689e-05        , 1.64467618e-05\
+        , 1.78343088e-05        , 1.93389175e-05        , 2.09704640e-05        , 2.27396575e-05\
+        , 2.46581108e-05        , 2.67384162e-05        , 2.89942285e-05        , 3.14403547e-05\
+        , 3.40928507e-05        , 3.69691271e-05        , 4.00880633e-05        , 4.34701316e-05\
+        , 4.71375313e-05        , 5.11143348e-05        , 5.54266452e-05        , 6.01027678e-05\
+        , 6.51733960e-05        , 7.06718127e-05        , 7.66341087e-05        , 8.30994195e-05\
+        , 9.01101825e-05        , 9.77124154e-05        , 1.05956018e-04        , 1.14895100e-04\
+        , 1.24588336e-04        , 1.35099352e-04        , 1.46497140e-04        , 1.58856513e-04\
+        , 1.72258597e-04        , 1.86791360e-04        , 2.02550194e-04        , 2.19638537e-04\
+        , 2.38168555e-04        , 2.58261876e-04        , 2.80050389e-04        , 3.03677112e-04\
+        , 3.29297126e-04        , 3.57078596e-04        , 3.87203878e-04        , 4.19870708e-04\
+        , 4.55293507e-04        , 4.93704785e-04        , 5.35356668e-04        , 5.80522552e-04\
+        , 6.29498899e-04        , 6.82607183e-04        , 7.40196000e-04        , 8.02643352e-04\
+        , 8.70359136e-04        , 9.43787828e-04        , 1.02341140e-03        , 1.10975250e-03\
+        , 1.20337784e-03        , 1.30490198e-03        , 1.41499130e-03        , 1.53436841e-03\
+        , 1.66381689e-03        , 1.80418641e-03        , 1.95639834e-03        , 2.12145178e-03\
+        , 2.30043012e-03        , 2.49450814e-03        , 2.70495973e-03        , 2.93316628e-03\
+        , 3.18062569e-03        , 3.44896226e-03        , 3.73993730e-03        , 4.05546074e-03\
+        , 4.39760361e-03        , 4.76861170e-03        , 5.17092024e-03        , 5.60716994e-03\
+        , 6.08022426e-03        , 6.59318827e-03        , 7.14942899e-03        , 7.75259749e-03\
+        , 8.40665289e-03        , 9.11588830e-03        , 9.88495905e-03        , 1.07189132e-02\
+        , 1.16232247e-02        , 1.26038293e-02        , 1.36671636e-02        , 1.48202071e-02\
+        , 1.60705282e-02        , 1.74263339e-02        , 1.88965234e-02        , 2.04907469e-02\
+        , 2.22194686e-02        , 2.40940356e-02        , 2.61267523e-02        , 2.83309610e-02\
+        , 3.07211300e-02        , 3.33129479e-02        , 3.61234270e-02        , 3.91710149e-02\
+        , 4.24757155e-02        , 4.60592204e-02        , 4.99450512e-02        , 5.41587138e-02\
+        , 5.87278661e-02        , 6.36824994e-02        , 6.90551352e-02        , 7.48810386e-02\
+        , 8.11984499e-02        , 8.80488358e-02        , 9.54771611e-02        , 1.03532184e-01\
+        , 1.12266777e-01        , 1.21738273e-01        , 1.32008840e-01        , 1.43145894e-01\
+        , 1.55222536e-01        , 1.68318035e-01        , 1.82518349e-01        , 1.97916687e-01\
+        , 2.14614120e-01        , 2.32720248e-01        , 2.52353917e-01        , 2.73644000e-01\
+        , 2.96730241e-01        , 3.21764175e-01        , 3.48910121e-01        , 3.78346262e-01\
+        , 4.10265811e-01        , 4.44878283e-01        , 4.82410870e-01        , 5.23109931e-01\
+        , 5.67242607e-01        , 6.15098579e-01        , 6.66991966e-01        , 7.23263390e-01\
+        , 7.84282206e-01        , 8.50448934e-01        , 9.22197882e-01        , 1.00000000e+00};*/
+
+   // Defining histograms recursively
+   for(int i=0;i<20;i++)
+   {
+      name << "h_" << i;
+      //std::cout << name.str().c_str() << std::endl;
+      std::string temp = name.str();
+      h[i] = new TH1F(temp.c_str(),"Spectrum",49,bins);
+      name.str("");
+      name << "h2_" << i;
+      temp=name.str();
+      //std::cout << name.str().c_str() << std::endl;
+      h2[i] = new TH1F(temp.c_str(),"Spectrum",49,bins);
+      h[i]->Sumw2();
+      //h2[i]->Sumw2();
+      name.str("");
+   }
+
+   for(int i=0;i<6;i++)
+   {
+      name << "hgamma_" << i;
+      std::string temp = name.str();
+      hgamma[i] = new TH1F(temp.c_str(),"Spectrum",49,bins2);
+      name.str("");
+      name << "helect_" << i;
+      temp = name.str();
+      helect[i] = new TH1F(temp.c_str(),"Spectrum",49,bins2);
+      name.str("");
+      name << "hposit_" << i;
+      temp = name.str();
+      hposit[i] = new TH1F(temp.c_str(),"Spectrum",49,bins2);
+      name.str("");
+   }
+
+
+   // Get the trees stored on the files
+   TTree *t1=(TTree*)f1->Get("t");
+   TTree *t2=(TTree*)f2->Get("t");
+   TTree *t3=(TTree*)f3->Get("t");
+   TTree *t4=(TTree*)f4->Get("t");
+   TTree *t5=(TTree*)f5->Get("t");
+   TTree *t6=(TTree*)f6->Get("t");
+   TTree *t7=(TTree*)f7->Get("t");
+
+   gStyle->SetOptStat(11111);
+
+   // Define pointers to be filled with the branches contents
+   std::vector<float>* Ee1;
+   std::vector<float>* Ee2;
+   std::vector<float>* Ee3;
+   std::vector<float>* Ee4;
+   std::vector<float>* Ee5;
+   std::vector<float>* Ee6;
+   std::vector<float>* Ee7;
+
+   std::vector<float>* Ep1;
+   std::vector<float>* Ep2;
+   std::vector<float>* Ep3;
+   std::vector<float>* Ep4;
+   std::vector<float>* Ep5;
+   std::vector<float>* Ep6;
+   std::vector<float>* Ep7;
+
+   std::vector<float>* Eg1;
+   std::vector<float>* Eg2;
+   std::vector<float>* Eg3;
+   std::vector<float>* Eg4;
+   std::vector<float>* Eg5;
+   std::vector<float>* Eg6;
+   std::vector<float>* Eg7;
+
+   Ee1=0;Ee2=0;Ee3=0;Ee4=0;Ee5=0;Ee6=0;Ee7=0;
+   Ep1=0;Ep2=0;Ep3=0;Ep4=0;Ep5=0;Ep6=0;Ep7=0;
+   Eg1=0;Eg2=0;Eg3=0;Eg4=0;Eg5=0;Eg6=0;Eg7=0;
+
+
+   // Set branches addresses
+   t1->SetBranchAddress("E_e",&Ee1);
+   t2->SetBranchAddress("E_e",&Ee2);
+   t3->SetBranchAddress("E_e",&Ee3);
+   t4->SetBranchAddress("E_e",&Ee4);
+   t5->SetBranchAddress("E_e",&Ee5);
+   t6->SetBranchAddress("E_e",&Ee6);
+   t7->SetBranchAddress("E_e",&Ee7);
+
+   t1->SetBranchAddress("E_p",&Ep1);
+   t2->SetBranchAddress("E_p",&Ep2);
+   t3->SetBranchAddress("E_p",&Ep3);
+   t4->SetBranchAddress("E_p",&Ep4);
+   t5->SetBranchAddress("E_p",&Ep5); 
+   t6->SetBranchAddress("E_p",&Ep6);
+   t7->SetBranchAddress("E_p",&Ep7);
+
+   t1->SetBranchAddress("E_g",&Eg1);
+   t2->SetBranchAddress("E_g",&Eg2);
+   t3->SetBranchAddress("E_g",&Eg3);
+   t4->SetBranchAddress("E_g",&Eg4);
+   t5->SetBranchAddress("E_g",&Eg5);
+   t6->SetBranchAddress("E_g",&Eg6);
+   t7->SetBranchAddress("E_g",&Eg7);
+
+   // Get the total number of entries (all trees are supposed to have the same number of entries) 
+   std::vector<int> entries;
+   entries.push_back(t1->GetEntries());
+   entries.push_back(t2->GetEntries());
+   entries.push_back(t3->GetEntries());
+   entries.push_back(t4->GetEntries());
+   entries.push_back(t5->GetEntries());
+   entries.push_back(t6->GetEntries());
+   entries.push_back(t7->GetEntries());
+
+   Int_t nEntries=*std::max_element(entries.begin(),entries.end());
+
+   std::cout << " nEntries t1 " << t1->GetEntries() << std::endl;
+   std::cout << " nEntries t2 " << t2->GetEntries() << std::endl; 
+   std::cout << " nEntries t3 " << t3->GetEntries() << std::endl; 
+   std::cout << " nEntries t4 " << t4->GetEntries() << std::endl; 
+   std::cout << " nEntries t5 " << t5->GetEntries() << std::endl; 
+   std::cout << " nEntries t6 " << t6->GetEntries() << std::endl;
+   std::cout << " nEntries t7 " << t7->GetEntries() << std::endl;
+
+   // Will use these variables as counters of the numbers of produced gravitinos
+   int eEvWtau=0,eEvWmu=0,eEvWe=0,eEvZnu=0,eEvGn3b=0,eEvGn=0,pEvWtau=0,pEvWmu=0,pEvWe=0,pEvZnu=0,pEvGn3b=0,pEvGn=0,gEvWtau=0,gEvWmu=0,gEvWe=0,gEvZnu=0,gEvGn3b=0,gEvGn=0;
+   int eEvHnu=0,pEvHnu=0,gEvHnu=0;
+
+   std::cout << "Now running for mass: " << mG << std::endl;
+
+   for(int ientry=0;ientry<nEntries;ientry++)
+   {
+      if(ientry <= t1->GetEntries()) t1->GetEntry(ientry);
+      if(ientry <= t2->GetEntries()) t2->GetEntry(ientry);
+      if(ientry <= t3->GetEntries()) t3->GetEntry(ientry);
+      if(ientry <= t4->GetEntries()) t4->GetEntry(ientry);
+      if(ientry <= t5->GetEntries()) t5->GetEntry(ientry);
+      if(ientry <= t6->GetEntries()) t6->GetEntry(ientry);
+      if(ientry <= t7->GetEntries()) t7->GetEntry(ientry);
+
+      // For each tree entry check if there is at least one electron,photon or positron (and count it as a gravitino decay)
+      if(Ee1->size()!=0 && ientry <= t1->GetEntries()) eEvWtau++;if(Ep1->size()!=0) pEvWtau++;if(Eg1->size()!=0) gEvWtau++;
+      if(Ee2->size()!=0 && ientry <= t2->GetEntries()) eEvWe++;if(Ep2->size()!=0) pEvWe++;if(Eg2->size()!=0) gEvWe++;
+      if(Ee3->size()!=0 && ientry <= t3->GetEntries()) eEvWmu++;if(Ep3->size()!=0) pEvWmu++;if(Eg3->size()!=0) gEvWmu++;
+      if(Ee4->size()!=0 && ientry <= t4->GetEntries()) eEvZnu++;if(Ep4->size()!=0) pEvZnu++;if(Eg4->size()!=0) gEvZnu++;
+      if(Ee5->size()!=0 && ientry <= t5->GetEntries()) eEvGn++;if(Ep5->size()!=0) pEvGn++;if(Eg5->size()!=0) gEvGn++;
+      if(Ee6->size()!=0 && ientry <= t6->GetEntries()) eEvGn3b++;if(Ep6->size()!=0) pEvGn3b++;if(Eg6->size()!=0) gEvGn3b++;
+      if(Ee7->size()!=0 && ientry <= t7->GetEntries()) eEvHnu++;if(Ep7->size()!=0) pEvHnu++;if(Eg7->size()!=0) gEvHnu++;
+
+      // Fill the corresponding histograms for each particular decay mode and for each particle type 
+      // For electrons
+      if(ientry <= t1->GetEntries()){
+         for(size_t i=0;i<Ee1->size();i++){ h[0]->Fill(Ee1->at(i));helect[0]->Fill(2*Ee1->at(i)/mG);}
+         for(size_t i=0;i<Ep1->size();i++){ h[6]->Fill(Ep1->at(i));hposit[0]->Fill(2*Ep1->at(i)/mG);}
+         for(size_t i=0;i<Eg1->size();i++){ h[12]->Fill(Eg1->at(i));hgamma[0]->Fill(2*Eg1->at(i)/mG);}
+      }
+      if(ientry <= t2->GetEntries()){
+         for(size_t i=0;i<Ee2->size();i++){ h[1]->Fill(Ee2->at(i));helect[1]->Fill(2*Ee2->at(i)/mG);}
+         for(size_t i=0;i<Ep2->size();i++){ h[7]->Fill(Ep2->at(i));hposit[1]->Fill(2*Ep2->at(i)/mG);}
+         for(size_t i=0;i<Eg2->size();i++){ h[13]->Fill(Eg2->at(i));hgamma[1]->Fill(2*Eg2->at(i)/mG);}
+      }
+      if(ientry <= t3->GetEntries()){
+         for(size_t i=0;i<Ee3->size();i++){ h[2]->Fill(Ee3->at(i));helect[2]->Fill(2*Ee3->at(i)/mG);}
+         for(size_t i=0;i<Ep3->size();i++){ h[8]->Fill(Ep3->at(i));hposit[2]->Fill(2*Ep3->at(i)/mG);}
+         for(size_t i=0;i<Eg3->size();i++){ h[14]->Fill(Eg3->at(i));hgamma[2]->Fill(2*Eg3->at(i)/mG);}
+      }
+      if(ientry <= t4->GetEntries()){
+         for(size_t i=0;i<Ee4->size();i++){ h[3]->Fill(Ee4->at(i));helect[3]->Fill(2*Ee4->at(i)/mG);}
+         for(size_t i=0;i<Ep4->size();i++){ h[9]->Fill(Ep4->at(i));hposit[3]->Fill(2*Ep4->at(i)/mG);}
+         for(size_t i=0;i<Eg4->size();i++){ h[15]->Fill(Eg4->at(i));hgamma[3]->Fill(2*Eg4->at(i)/mG);}
+      }
+      if(ientry <= t5->GetEntries()){
+         for(size_t i=0;i<Ee5->size();i++){ h[4]->Fill(Ee5->at(i));}
+         for(size_t i=0;i<Ep5->size();i++){ h[10]->Fill(Ep5->at(i));}
+         for(size_t i=0;i<Eg5->size();i++){ h[16]->Fill(Eg5->at(i));}
+      }
+      if(ientry <= t6->GetEntries()){
+         for(size_t i=0;i<Ee6->size();i++){ h[5]->Fill(Ee6->at(i));helect[4]->Fill(2*Ee6->at(i)/mG);}
+         for(size_t i=0;i<Ep6->size();i++){ h[11]->Fill(Ep6->at(i));hposit[4]->Fill(2*Ep6->at(i)/mG);}
+         for(size_t i=0;i<Eg6->size();i++){ h[17]->Fill(Eg6->at(i));hgamma[4]->Fill(2*Eg6->at(i)/mG);}
+      }
+      if(ientry <= t7->GetEntries()){
+         for(size_t i=0;i<Ee7->size();i++){ helect[5]->Fill(2*Ee7->at(i)/mG);}
+         for(size_t i=0;i<Ep7->size();i++){ /*h[11]->Fill(Ep6->at(i));*/hposit[5]->Fill(2*Ep7->at(i)/mG);}
+         for(size_t i=0;i<Eg7->size();i++){ /*h[17]->Fill(Eg6->at(i));*/hgamma[5]->Fill(2*Eg7->at(i)/mG);}
+      }
+   }
+
+   TH1F *h0  = (TH1F*)h[0] -> Clone("h0");
+   TH1F *h6  = (TH1F*)h[6] -> Clone("h6");
+   TH1F *h12 = (TH1F*)h[12]-> Clone("h12");
+
+   //Check sum of Branching ratios (Must equal 1)
+   double brSum = tauW + eW + muW + nuZ + Gnu + G3bnu;
+   std::cout << " Checking Branching ratios sum " << brSum << std::endl;
+
+   std::cout << " Checking if electrons/positros come from onshell photons (not possible) " << eEvGn + pEvGn << std::endl;
+
+   std::vector<float> eNorms;
+   std::vector<float> pNorms;
+   std::vector<float> gNorms;
+
+   eNorms.push_back(eEvWtau);eNorms.push_back(eEvWe);eNorms.push_back(eEvWmu);eNorms.push_back(eEvZnu);eNorms.push_back(eEvGn3b);eNorms.push_back(eEvHnu);
+   pNorms.push_back(pEvWtau);pNorms.push_back(pEvWe);pNorms.push_back(pEvWmu);pNorms.push_back(pEvZnu);pNorms.push_back(pEvGn3b);pNorms.push_back(pEvHnu);
+   gNorms.push_back(gEvWtau);gNorms.push_back(gEvWe);gNorms.push_back(gEvWmu);gNorms.push_back(gEvZnu);gNorms.push_back(gEvGn3b);gNorms.push_back(gEvHnu);
+
+
+   //Normalize to the number of entries in the ttrees (not to histogram entries)
+   Float_t Norm_e = eEvWtau + eEvWmu + eEvWe + eEvGn + eEvGn3b + eEvZnu;
+   Float_t Norm_p = pEvWtau + pEvWmu + pEvWe + pEvGn + pEvGn3b + pEvZnu;
+   Float_t Norm_g = gEvWtau + gEvWmu + gEvWe + gEvGn + gEvGn3b + gEvZnu;
+
+   std::cout << "name " << name.str().c_str() << std::endl;
+   TCanvas *c=new TCanvas("c","",1000,1000,1000,1000);
+
+   c->SetLogy();c->SetLogx();
+
+   name.str("");
+
+   for (int i=0;i<20;i++){
+      if(h[i]->Integral()==0) continue;
+      h[i]->SetMarkerStyle(8);
+      h[i]->Draw("P L");            
+      name << "outputs/h_" << i <<"_mG" ".png";
+      c->SaveAs(name.str().c_str());
+      name.str("");
+
+      c->Modified();
+      c->Update();
+
+   }
+
+   // Combine results for dN/dE
+   // Combined result for electrons   
+   h[0]->Scale(tauW);
+   h[0]->Add(h[1],eW);
+   h[0]->Add(h[2],muW);
+   h[0]->Add(h[3],nuZ);
+   h[0]->Add(h[5],G3bnu);
+
+   // Combined result for positrons
+   h[6]->Scale(tauW);
+   h[6]->Add(h[7],eW);
+   h[6]->Add(h[8],muW);
+   h[6]->Add(h[9],nuZ);
+   h[6]->Add(h[11],G3bnu);
+
+   // Combined result for photons
+   h[12]->Scale(tauW);
+   h[12]->Add(h[13],eW);
+   h[12]->Add(h[14],muW);
+   h[12]->Add(h[15],nuZ);
+   h[12]->Add(h[16],Gnu);
+   h[13]->Add(h[17],G3bnu);
+
+   stringstream norm;
+
+   // Filling E^2dN/dE histograms 
+   for(int ihist=0;ihist<18;ihist++){      
+      for(int ibin=0;ibin<h[ihist]->GetNbinsX();ibin++){ 
+      //if(ihist == 3) std::cout << h[ihist]->GetBinContent(ibin) << " " << h[ihist]->GetBinCenter(ibin) << " " << h[ihist]->GetBinCenter(ibin)*h[ihist]->GetBinCenter(ibin)*h[ihist]->GetBinContent(ibin) << std::endl;
+      if(h[ihist]->GetBinContent(ibin) != 0) h2[ihist]->Fill(h[ihist]->GetBinCenter(ibin),h[ihist]->GetBinLowEdge(ibin)*(h[ihist]->GetBinLowEdge(ibin)+h[ihist]->GetBinWidth(ibin))*h[ihist]->GetBinContent(ibin)/h[ihist]->GetBinWidth(ibin));
+      }
+   }
+
+   TH1F *h2_0  = new TH1F("h_2_0","Spectrum",49,bins);
+   TH1F *h2_6  = new TH1F("h_2_6","Spectrum",49,bins);
+   TH1F *h2_12 = new TH1F("h_2_12","Spectrum",49,bins);
+
+   for(int ibin=0;ibin<h0->GetNbinsX();ibin++){ if(h0->GetBinContent(ibin) != 0) 
+                 h2_0->Fill(h0->GetBinCenter(ibin),h0->GetBinLowEdge(ibin)*(h0->GetBinLowEdge(ibin)+h0->GetBinWidth(ibin))*h0->GetBinContent(ibin)/h0->GetBinWidth(ibin));
+   }
+   for(int ibin=0;ibin<h6->GetNbinsX();ibin++){ if(h6->GetBinContent(ibin) != 0) 
+                 h2_6->Fill(h6->GetBinCenter(ibin),h6->GetBinLowEdge(ibin)*(h6->GetBinLowEdge(ibin)+h6->GetBinWidth(ibin))*h6->GetBinContent(ibin)/h6->GetBinWidth(ibin));
+   }
+   for(int ibin=0;ibin<h12->GetNbinsX();ibin++){ if(h12->GetBinContent(ibin) != 0) h2_12->Fill(h12->GetBinCenter(ibin),h12->GetBinLowEdge(ibin)*(h12->GetBinLowEdge(ibin)+h12->GetBinWidth(ibin))*h12->GetBinContent(ibin)/h12->GetBinWidth(ibin));}
+
+   //Float_t Norm2_e =(float)h2[0]->Integral();
+   //Float_t Norm2_p =(float)h2[5]->Integral();
+   //Float_t Norm2_g =(float)h2[10]->Integral();   
+
+   std::cout << " Norm_e " << Norm_e << std::endl;
+
+   h2_0->Scale(tauW);
+   h2[1]->Scale(eW);
+   h2[2]->Scale(muW);
+   h2[3]->Scale(nuZ);
+   h2[4]->Scale(Gnu);
+   h2[5]->Scale(G3bnu);
+   h2_6->Scale(tauW);
+   h2[7]->Scale(eW);
+   h2[8]->Scale(muW);
+   h2[9]->Scale(nuZ);
+   h2[10]->Scale(Gnu);
+   h2[11]->Scale(G3bnu);
+   h2_12->Scale(tauW);
+   h2[13]->Scale(eW);
+   h2[14]->Scale(muW);
+   h2[15]->Scale(nuZ);
+   h2[16]->Scale(Gnu);
+   h2[17]->Scale(G3bnu);
+
+   h2_0->Scale(1./Norm_e);
+   h2[1]->Scale(1./Norm_e);
+   h2[2]->Scale(1./Norm_e);
+   h2[3]->Scale(1./Norm_e);
+   h2[4]->Scale(1./Norm_e);
+   h2[5]->Scale(1./Norm_e);
+   h2_6->Scale(1./Norm_p);
+   h2[7]->Scale(1./Norm_p);
+   h2[8]->Scale(1./Norm_p);
+   h2[9]->Scale(1./Norm_p);
+   h2[10]->Scale(1./Norm_p);
+   h2[11]->Scale(1./Norm_p);
+   h2_12->Scale(1./Norm_g);
+   h2[13]->Scale(1./Norm_g);
+   h2[14]->Scale(1./Norm_g);
+   h2[15]->Scale(1./Norm_g);
+   h2[16]->Scale(1./Norm_g);
+   h2[17]->Scale(1./Norm_g);
+     
+   h[0]->Scale(1./Norm_e);
+   h[5]->Scale(1./Norm_p);
+   h[10]->Scale(1./Norm_g);
+
+   h2[0]->Scale(1./Norm_e);
+   h2[6]->Scale(1./Norm_p);
+   h2[12]->Scale(1./Norm_g);  
+
+   for(int ibin=0;ibin<h[0]->GetNbinsX();ibin++){ if(h[0]->GetBinContent(ibin) != 0) {
+                 std::cout << h[0]->GetBinCenter(ibin) << " " << h[0]->GetBinContent(ibin) << std::endl;
+                 }
+   }
+   for(int ibin=0;ibin<h[5]->GetNbinsX();ibin++){ if(h[5]->GetBinContent(ibin) != 0) {
+                 std::cout << h[5]->GetBinCenter(ibin) << " " << h[5]->GetBinContent(ibin) << std::endl;
+                 }
+   }
+
+   TLegend *l1=new TLegend(0.75,0.5,0.9,0.85);   
+   TLegend *l2=new TLegend(0.75,0.5,0.9,0.85);
+   TLegend *l3=new TLegend(0.75,0.5,0.9,0.85);   
+
+   double fractpart,intpart;
+   fractpart = modf (0.5*mG , &intpart);
+
+   c->Modified();
+   c->Update();
+   c->SetLogy(0);
+   c->SetLogx(0);
+
+   h2[0]->GetXaxis()->SetRangeUser(1.0,intpart);
+   h2[0]->GetYaxis()->SetRangeUser(0.0,1.5*h2[0]->GetMaximum());
+   h2[0]->GetXaxis()->SetTitle("E (GeV)");
+   h2[0]->GetYaxis()->SetTitle("E^{2}#frac{dN_{e^{-}}}{dE}");
+   h2[0]->GetYaxis()->SetTitleOffset(2.5);
+   //h2[0]->SetMarkerStyle(8);
+   h2[0]->SetTitleOffset(1.5,"Y");
+   h2[0]->SetLineColor(1);
+   h2[0]->Draw();  // Sum
+   h2[1]->SetLineColor(2);
+   h2[1]->Draw("same"); // eW
+   h2[2]->SetLineColor(3);
+   h2[2]->Draw("same"); // muW
+   h2[3]->SetLineColor(4);
+   h2[3]->Draw("same"); // Znu
+   h2[4]->SetLineColor(5);
+   h2[4]->Draw("same"); // Gnu
+   h2[5]->SetLineColor(6);
+   h2[5]->Draw("same"); // G3bnu
+   h2_0->SetLineColor(7);
+   h2_0->Draw("same");  // Wtau
+
+   l1->AddEntry(h2[0],"Total","l");
+   l1->AddEntry(h2[1],"e W","l");
+   l1->AddEntry(h2[2],"#mu W","l");
+   l1->AddEntry(h2[3],"Z#nu","l");
+   l1->AddEntry(h2[4],"#gamma #nu","l");
+   l1->AddEntry(h2[5],"#gamma #nu 3b","l");
+   l1->AddEntry(h2_0,"#tau W","l");
+
+   l1->Draw();
+
+   c->SaveAs("outputs/plotE2_elec_mG.png");
+
+   c->Modified();
+   c->Update();
+
+   h2[6]->GetXaxis()->SetRangeUser(1.0,intpart);
+   h2[6]->GetYaxis()->SetRangeUser(0.0,1.5*h2[6]->GetMaximum());
+   h2[6]->GetXaxis()->SetTitle("E (GeV)");
+   h2[6]->GetYaxis()->SetTitle("E^{2} #frac{dN_{e^{+}}}{dE}");
+   h2[6]->GetYaxis()->SetTitleOffset(2.5);
+   //h2[6]->SetMarkerStyle(8);
+   //h2[6]->SetTitleOffset(1.5,"Y");
+   h2[6]->SetLineColor(1);
+   h2[6]->Draw(); // Sum
+   h2[7]->SetLineColor(2);
+   h2[7]->Draw("same"); // eW
+   h2[8]->SetLineColor(3);
+   h2[8]->Draw("same"); // muW
+   h2[9]->SetLineColor(4);
+   h2[9]->Draw("same"); // Znu
+   h2[10]->SetLineColor(5);
+   h2[10]->Draw("same"); // Gnu
+   h2[11]->SetLineColor(6);
+   h2[11]->Draw("same"); // G3bnu
+   h2_6->SetLineColor(7);
+   h2_6->Draw("same");  // Wtau
+
+   l2->AddEntry(h2[6],"Total","l");
+   l2->AddEntry(h2[7],"e W","l");
+   l2->AddEntry(h2[8],"#mu W","l");
+   l2->AddEntry(h2[9],"Z#nu","l");
+   l2->AddEntry(h2[10],"#gamma #nu","l");
+   l2->AddEntry(h2[11],"#gamma #nu 3b","l");
+   l2->AddEntry(h2_6,"#tau W","l");
+
+   l2->Draw();
+
+   c->SaveAs("outputs/plotE2_pos_mG.png");
+
+   c->Modified();
+   c->Update();
+
+   c->SetLogy();
+   c->SetLogx();
+
+   h2[12]->GetYaxis()->SetRangeUser(1e-6,1.5*h2[12]->GetMaximum());
+   h2[12]->GetXaxis()->SetTitle("E (GeV)");
+   h2[12]->GetYaxis()->SetTitle("E^{2} #frac{dN_{#gamma}}{dE}");
+   h2[12]->GetYaxis()->SetTitleOffset(2.5);
+   h2[12]->SetLineColor(1);
+   h2[12]->Draw();  // Total
+   h2[13]->SetLineColor(2);
+   h2[13]->Draw("same"); // eW
+   h2[14]->SetLineColor(3);
+   h2[14]->Draw("same"); // muW
+   h2[15]->SetLineColor(4);
+   h2[15]->Draw("same"); // Znu
+   h2[16]->SetLineColor(5);
+   h2[16]->Draw("same"); // Gnu
+   h2[17]->SetLineColor(6);
+   h2[17]->Draw("same"); // Gnu3b
+   h2_12->SetLineColor(7);
+   h2_12->Draw("same");  // Wtau
+
+   l3->AddEntry(h2[12],"Total","l");
+   l3->AddEntry(h2[13],"e W","l");
+   l3->AddEntry(h2[14],"#mu W","l");
+   l3->AddEntry(h2[15],"Z#nu","l");
+   l3->AddEntry(h2[16],"#gamma #nu","l");
+   l3->AddEntry(h2[17],"#gamma #nu 3b","l");
+   l3->AddEntry(h2_12,"#tau W","l");
+
+   l3->Draw();
+   c->SaveAs("outputs/plotE2_gamma_mG.png");
+
+   c->Modified();
+   c->Update();
+
+   //c->SetLogx();
+   //c->SetLogy();
+
+   //h[0]->GetYaxis()->SetRangeUser(1e-6,1);
+   h[0]->GetXaxis()->SetTitle("E (GeV)");
+   h[0]->GetYaxis()->SetTitle("#frac{dN_{e^{-}}}{dE}");
+   h[0]->SetMarkerStyle(8);
+   h[0]->SetTitleOffset(1.5,"Y");
+   h[0]->Draw();
+   c->SaveAs("outputs/plot_elec_n_mG.png");
+
+   c->Modified();
+   c->Update();
+
+   //h[6]->GetYaxis()->SetRangeUser(1e-6,1);
+   h[6]->GetXaxis()->SetTitle("E (GeV)");
+   h[6]->GetYaxis()->SetTitle("#frac{dN_{e^{+}}}{dE}");
+   h[6]->SetMarkerStyle(8);
+   h[6]->SetTitleOffset(1.5,"Y");
+   h[6]->Draw();
+   c->SaveAs("outputs/plot_pos_n_mG.png");
+
+   c->Modified();
+   c->Update();
+
+   //h[12]->GetYaxis()->SetRangeUser(1e-6,1);
+   h[12]->GetXaxis()->SetTitle("E (GeV)");
+   h[12]->GetYaxis()->SetTitle("#frac{dN_{#gamma}}{dE}");
+   h[12]->SetMarkerStyle(8);
+   h[12]->SetTitleOffset(1.5,"Y");
+   h[12]->Draw();
+   c->SaveAs("outputs/plot_gamma_n_mG.png");
+
+   c->Modified();
+   c->Update();
+
+   stringstream hname,tname,mass;
+
+   std::vector<string> names;
+   std::vector<string> name0;
+
+   names.push_back("W#tau");
+   names.push_back("We");
+   names.push_back("W#mu");
+   names.push_back("Z#nu");
+   names.push_back("#gamma^{*}#nu");
+   names.push_back("H#nu");
+
+   name0.push_back("Wtau");
+   name0.push_back("We");
+   name0.push_back("Wmu");
+   name0.push_back("Znu");
+   name0.push_back("gnu");
+   name0.push_back("Hnu");
+
+   TPaveText *pt = new TPaveText(0.15,0.75,0.3,0.85,"NDC");
+   TPaveText *pt0 = new TPaveText(0.35,0.75,0.5,0.85,"NDC");
+   //std::cout << "TPaveText " << names.at(i) << std::endl;
+
+   TLegend *l=new TLegend(0.15,0.55,0.3,0.7);
+   l->SetBorderSize(0);
+
+   for(int i=0;i<6;i++){
+     tname << "outputs/dnde_gamma_" << name0.at(i) << "_" << mG << ".txt";
+     std::ofstream ot(tname.str().c_str());
+     hgamma[i]->GetXaxis()->SetRangeUser(1e-4,1);
+     hgamma[i]->Scale(1./gNorms.at(i));
+     hgamma[i]->SetTitle("");
+     hgamma[i]->GetXaxis()->SetTitle("x=2E/m_{#tilde{G}}");
+     hgamma[i]->GetXaxis()->SetTitleOffset(1.2);
+     hgamma[i]->GetYaxis()->SetTitle("dN/dLogx");
+     hgamma[i]->GetYaxis()->SetTitleOffset(1.2);
+     hgamma[i]->SetMarkerStyle(8);
+     hgamma[i]->SetMarkerColor(i+1);
+     if(i==0) hgamma[i]->Draw("ph");
+     else hgamma[i]->Draw("ph:same");
+     l->AddEntry(hgamma[i],name0.at(i).c_str(),"p");
+     for (UInt_t j=1;j<helect[i]->GetXaxis()->GetNbins()+2;j++) {
+        ot << hgamma[i]->GetBinCenter(j) << " " << log(10)*sqrt(hgamma[i]->GetBinLowEdge(j)*(hgamma[i]->GetBinLowEdge(j)+hgamma[i]->GetBinWidth(j)))*hgamma[i]->GetBinContent(j)/hgamma[i]->GetBinWidth(j) << std::endl;
+     }
+     ot.close();
+     tname.str("");
+   }
+
+   l->Draw();
+   pt0->Draw();
+   pt0->AddText("m_{#tilde{G}} = mG GeV");
+
+   hname << "outputs/plotgammax_" << mG << ".png";
+
+   c->SaveAs(hname.str().c_str());
+   c->Modified();
+   c->Update();
+
+   TLegend *le=new TLegend(0.15,0.55,0.3,0.7);
+   le->SetBorderSize(0);
+
+   for(int i=0;i<6;i++){
+     tname << "outputs/dnde_elect_" << name0.at(i) << "_" << mG << ".txt";
+     std::ofstream ote(tname.str().c_str());
+     helect[i]->GetXaxis()->SetRangeUser(1e-4,1);
+     helect[i]->Scale(1./eNorms.at(i));
+     helect[i]->SetTitle("");
+     helect[i]->GetXaxis()->SetTitle("x=2E/m_{#tilde{G}}");
+     helect[i]->GetXaxis()->SetTitleOffset(1.2);
+     helect[i]->GetYaxis()->SetTitle("dN/dLogx");
+     helect[i]->GetYaxis()->SetTitleOffset(1.2);
+     helect[i]->SetMarkerStyle(8);
+     helect[i]->SetMarkerColor(i+1);
+     if(i==0) helect[i]->Draw("ph");
+     else helect[i]->Draw("ph:same");
+     le->AddEntry(helect[i],name0.at(i).c_str(),"p");
+     for (UInt_t j=1;j<helect[i]->GetXaxis()->GetNbins()+2;j++) {
+        ote << helect[i]->GetBinCenter(j) << " " << log(10)*sqrt(helect[i]->GetBinLowEdge(j)*(helect[i]->GetBinLowEdge(j)+helect[i]->GetBinWidth(j)))*helect[i]->GetBinContent(j)/helect[i]->GetBinWidth(j) << std::endl;
+     }
+     ote.close();
+     tname.str("");
+   }
+
+   le->Draw();
+   pt0->Draw();
+   //pt0->AddText("m_{#tilde{G}} = mG GeV");
+
+   hname.str("");
+
+   hname << "outputs/plotpositx_" << mG << ".png";
+
+   c->SaveAs(hname.str().c_str());
+   c->Modified();
+   c->Update();
+
+   TLegend *lp=new TLegend(0.15,0.55,0.3,0.7);
+   lp->SetBorderSize(0);
+
+   for(int i=0;i<6;i++){
+     tname << "outputs/dnde_posit_" << name0.at(i) << "_" << mG << ".txt";
+     std::ofstream ott(tname.str().c_str());
+     hposit[i]->GetXaxis()->SetRangeUser(1e-4,1);
+     hposit[i]->Scale(1./pNorms.at(i));
+     hposit[i]->SetTitle("");
+     hposit[i]->GetXaxis()->SetTitle("x=2E/m_{#tilde{G}}");
+     hposit[i]->GetXaxis()->SetTitleOffset(1.2);
+     hposit[i]->GetYaxis()->SetTitle("dN/dLogx");
+     hposit[i]->GetYaxis()->SetTitleOffset(1.2);
+     hposit[i]->SetMarkerStyle(8);
+     hposit[i]->SetMarkerColor(i+1);
+     if(i==0) hposit[i]->Draw("ph");
+     else hposit[i]->Draw("ph:same");
+     lp->AddEntry(hposit[i],name0.at(i).c_str(),"p");
+     for (UInt_t j=1;j<hposit[i]->GetXaxis()->GetNbins()+2;j++) {
+        ott << hposit[i]->GetBinCenter(j) << " " << log(10)*sqrt(hposit[i]->GetBinLowEdge(j)*(hposit[i]->GetBinLowEdge(j)+hposit[i]->GetBinWidth(j)))*hposit[i]->GetBinContent(j)/hposit[i]->GetBinWidth(j) << std::endl;
+     }
+     ott.close();
+     tname.str("");
+   }
+
+
+   lp->Draw();
+   pt0->Draw();
+   //pt0->AddText("m_{#tilde{G}} = mG GeV");
+
+   hname.str("");
+
+   hname << "outputs/plotpositx_" << mG << ".png";
+
+   c->SaveAs(hname.str().c_str());
+   c->Modified();
+   c->Update();
+
+
+
+   /*for(int i=0;i<5;i++){
+     TLegend *l=new TLegend(0.15,0.55,0.3,0.7);
+     l->SetBorderSize(0);
+     hgamma[i]->Scale(1./gNorms.at(i));
+     helect[i]->Scale(1./eNorms.at(i));
+     hposit[i]->Scale(1./pNorms.at(i));
+     hgamma[i]->SetTitle("");
+     hgamma[i]->GetXaxis()->SetTitle("x=2E/m_{#tilde{G}}");
+     hgamma[i]->GetXaxis()->SetTitleOffset(1.2);
+     hgamma[i]->GetYaxis()->SetTitle("dN/dLogx");
+     hgamma[i]->GetYaxis()->SetTitleOffset(1.2);
+     hgamma[i]->SetMarkerStyle(8);
+     hgamma[i]->SetMarkerColor(4);
+     hgamma[i]->Draw("ph");
+     helect[i]->SetMarkerStyle(8);
+     helect[i]->SetMarkerColor(3);
+     helect[i]->Draw("same:ph");
+     hposit[i]->SetMarkerStyle(8);
+     hposit[i]->SetMarkerColor(5);
+     hposit[i]->Draw("same:ph");
+
+     hname << "outputs/dnde_gamma_" << name0.at(i) << "_" << mG << ".txt";
+     std::ofstream ot(hname.str().c_str());
+     hname.str("");
+     hname << "outputs/dnde_elepos_" << name0.at(i) << "_" << mG << ".txt";
+     std::ofstream ott(hname.str().c_str());
+     for (UInt_t j=1;j<hgamma[i]->GetXaxis()->GetNbins()+2;j++) {
+        ot << " " << hgamma[i]->GetBinContent(j);
+        ott << helect[i]->GetBinCenter(j) << " " << helect[i]->GetBinContent(j) << " " << hposit[i]->GetBinContent(j) << std::endl;
+     }
+     ot.close();
+     ott.close();
+     hname.str("");
+     hname << "outputs/plotx_" << i << "_" << mG << ".png";
+     l->AddEntry(hgamma[i],"#gamma","p");
+     l->AddEntry(helect[i],"e^{-}","p");
+     l->AddEntry(hposit[i],"e^{+}","p");
+     TPaveText *pt = new TPaveText(0.15,0.75,0.3,0.85,"NDC");
+     TPaveText *pt0 = new TPaveText(0.35,0.75,0.5,0.85,"NDC");
+     std::cout << "TPaveText " << names.at(i) << std::endl;
+     pt->AddText(names.at(i).c_str());
+     mass <<"m_{#tilde{G}} = "<<mG << " GeV";
+     pt0->AddText(mass.str().c_str());
+     mass.str("");
+     l->Draw();
+     pt->Draw();
+     pt0->Draw();
+     c->SaveAs(hname.str().c_str());
+     c->Modified();
+     c->Update();
+     hname.str("");
+   }*/
+
+   f0->Write();
+   f0->Close();
+
+
+}
+
+

@@ -1,0 +1,277 @@
+! main07.cmnd.
+! This file contains commands to be read in for a Pythia8 run.
+! Lines not beginning with a letter or digit are comments.
+
+! 1) Settings used in the main program.
+Main:numberOfEvents=1000000         ! number of events to generate
+Main:timesAllowErrors = 5          ! allow a few failures before quitting
+
+! 2) Settings related to output in init(), next() and stat().
+Init:showChangedSettings = on      ! list changed settings
+Init:showChangedParticleData = on  ! list changed particle data
+Next:numberCount = 100             ! print message every n events
+Next:numberShowInfo = 1            ! print event information n times
+Next:numberShowProcess = 10         ! print process record n times
+Next:numberShowEvent = 0           ! print event record n times
+
+! 3) Beam parameter settings. Incoming beams do not radiate.
+Beams:idA = -11                    ! ficititious incoming e+
+Beams:idB = 11                     ! ficititious incoming e-
+PDF:lepton = off                   ! no radiation off ficititious e+e-
+Beams:eCM = 3000                   ! CM energy of collision
+!Beams:eCM = 100                   ! CM energy of collision
+
+TimeShower:mMaxGamma=3000
+!!WeakZ0:gmZmode=2
+WeakZ0:gmZmode=1
+
+! 4) Set up properties of the GeneralResonance and its decay channels.
+! id:all = name antiName spinType chargeType colType m0 mWidth mMin mMax tau0
+999999:all = GeneralResonance void 1 0 0 3000 1. 0. 0. 0.
+!999999:all = GeneralResonance void 1 0 0 100 1. 0. 0. 0.
+999999:isResonance = on
+! id:addChannel = onMode bRatio meMode product1 product2 ...
+! Note: sum of branching ratios automatically rescaled to 1.
+! Current channels illustrative only; insert your own decay list.
+!999999:addChannel = 1 0.15 101 1 -1   !  -> d dbar
+!999999:addChannel = 1 0.15 101 6 -6   !  -> t tbar
+!999999:addChannel = 1 0.15 101 15 -15 !  -> tau- tau+
+!999999:addChannel = 1 1.15 101 21 21  !  -> g g
+!999999:addChannel = 1 1.15 101 22 22  !  -> gamma gamma
+!#########################################################
+!########### My decay modes ##############################
+!#########################################################
+!!999999:addChannel = 1 0.15 100 24 15 !  -> Wtau
+!!999999:addChannel = 1 0.15 100 -24 -15 !  -> Wtau
+!!999999:addChannel = 1 0.15 100 24 13 !  -> Wmu
+!!999999:addChannel = 1 0.15 100 -24 -13 !  -> Wmu
+!!999999:addChannel = 1 0.15 100 24 11 !  -> We
+!!999999:addChannel = 1 0.15 100 -24 -11 !  -> We
+!!999999:addChannel = 1 0.15 100 23 16 !  -> Znu
+999999:addChannel = 1 0.15 101 22 16 !  -> gammanu
+!!999999:addChannel = 1 0.15 100 25 16 !  -> Hnu_tau
+!!999999:addChannel = 1 0.15 100 11 -11 12 !  -> Hnu_tau
+
+!999999:addChannel = 1 0.10 101 25 25  !  -> h0 h0
+
+!!23:mMin=20.
+!!23:offIfAny=3000
+
+! 5) Tell that also long-lived should decay.
+13:mayDecay   = true                 ! mu+-
+211:mayDecay  = true                 ! pi+-
+321:mayDecay  = true                 ! K+-
+130:mayDecay  = true                 ! K0_L
+2112:mayDecay = true                 ! n
+!23:mayDecay = true                   ! Z0
+!25:mayDecay   = true                 ! h0
+// main07.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2014 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Illustration how to generate various two-body channels from
+// astroparticle processes, e.g. neutralino annihilation or decay.
+// To this end a "blob" of energy is created with unit cross section,
+// from the fictitious collision of two non-radiating incoming e+e-.
+// In the accompanying main29.cmnd file the decay channels of this
+// blob can be set up. Furthermore, only gamma, e+-, p/pbar and
+// neutrinos are stable, everything else is set to decay.
+// (The "single-particle gun" of main21.cc offers another possible
+// approach to the same problem.)
+
+#include "Pythia8/Pythia.h"
+
+#include "TROOT.h"
+#include "TLorentzVector.h"
+#include "TRandom3.h"
+#include "TTree.h"
+#include "TFile.h"
+
+#include <iostream>
+//#include <vector>
+
+using namespace Pythia8;
+ 
+//==========================================================================
+
+// A derived class for (e+ e- ->) GenericResonance -> various final states.
+
+class Sigma1GenRes : public Sigma1Process {
+
+public:
+
+  // Constructor.
+  Sigma1GenRes() {}
+
+  // Evaluate sigmaHat(sHat): dummy unit cross section.
+  virtual double sigmaHat() {return 1.;}
+
+  // Select flavour. No colour or anticolour.
+  virtual void setIdColAcol() {setId( -11, 11, 999999);
+    setColAcol( 0, 0, 0, 0, 0, 0);}
+
+  // Info on the subprocess.
+  virtual string name()    const {return "GenericResonance";}
+  virtual int    code()    const {return 9001;}
+  virtual string inFlux()  const {return "ffbarSame";}
+
+};
+
+//==========================================================================
+
+int main() {
+
+  gROOT->ProcessLine("#include <vector>");
+
+  // Pythia generator.
+  Pythia pythia;
+
+  // A class to generate the fictitious resonance initial state.
+  SigmaProcess* sigma1GenRes = new Sigma1GenRes();
+
+  // Hand pointer to Pythia.
+  pythia.setSigmaPtr( sigma1GenRes);
+
+  // Read in the rest of the settings and data from a separate file.
+  pythia.readFile("main07.cmnd");
+
+  // Initialization.
+  pythia.init();
+
+  //pythia.particleData.listChanged(true);
+
+  // Extract settings to be used in the main program.
+  int nEvent  = pythia.mode("Main:numberOfEvents");
+  int nAbort  = pythia.mode("Main:timesAllowErrors");
+
+  // Histogram particle spectra.
+  Hist eGamma("energy spectrum of photons",        100, 0., 250.);
+  Hist eE(    "energy spectrum of e+ and e-",      100, 0., 250.);
+  Hist eP(    "energy spectrum of p and pbar",     100, 0., 250.);
+  Hist eNu(   "energy spectrum of neutrinos",      100, 0., 250.);
+  Hist eRest( "energy spectrum of rest particles", 100, 0., 250.);
+
+  TFile *f=new TFile("out.root","recreate");
+  TTree *t=new TTree("t","Tree with e+,e-, and gamma energies");
+
+  std::vector<float>* E_e;
+  std::vector<float>* E_p;
+  std::vector<float>* E_g;
+  std::vector<float>* E_ap;
+
+  t->Branch("E_e",&E_e);
+  t->Branch("E_p",&E_p);
+  t->Branch("E_g",&E_g);
+  t->Branch("E_ap",&E_ap);
+
+  bool checkVirtualg=true;
+  int iListMore = 0,nEvents=0;
+
+  TRandom3 *r = new TRandom3(0); 
+
+  // Begin event loop.
+  int iAbort = 0;
+  for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
+    double mGZ=0;
+    // Generate events. Quit if many failures.
+    if (!pythia.next()) {
+      if (++iAbort < nAbort) continue;
+      cout << " Event generation aborted prematurely, owing to error!\n";
+      break;
+    }    
+    E_e->clear();E_p->clear();E_g->clear();E_ap->clear();
+    TLorentzVector electron(0,0,0,0);
+
+    int thismu=-1;
+    int idmu = -1;
+    float rcharge=r->Uniform(0,1);
+    int ch=0;
+    if(rcharge<0.5) 
+      ch = 1;
+    else
+      ch = -1;
+
+    //cout << "Now on event: " << iEvent << endl;
+    //if(nEvents==100000) break;
+    bool skipEvent=1;
+    if(iEvent==1995)pythia.event.list();
+    // Loop over all particles and analyze the final-state ones.
+    for (int i = 0; i < pythia.event.size(); ++i){
+    //std::cout << "checkVirtualg " << checkVirtualg << std::endl;
+    if (pythia.event.size() > 8 && checkVirtualg) {
+      if (++iListMore < 4) pythia.event.list();
+      mGZ = (pythia.event[8].p() + pythia.event[9].p()).mCalc();
+      //std::cout << "mGZ= " << mGZ << "checkVirtualg " << checkVirtualg << std::endl;
+    }
+    if(checkVirtualg==1 && mGZ!=0 && skipEvent) {skipEvent=0;nEvents++;} //Count the event
+    if(checkVirtualg==1 && mGZ==0) continue; //Skip the event
+    if(pythia.event[i].idAbs() == 22 && pythia.event[i].m() != 0) std::cout << "is virtual photon " << std::endl;
+
+    int id    = pythia.event[i].id();
+    int status = pythia.event[i].status();
+    int statusHepMC = pythia.event[i].statusHepMC();
+    double pt = pythia.event[i].pT();
+    double eta = pythia.event[i].eta();
+    double phi = pythia.event[i].phi();
+    double m = pythia.event[i].m();
+    int idAbs = pythia.event[i].idAbs();
+    double eI = pythia.event[i].e();
+    int mpos = pythia.event[i].mother1();
+    int mid = pythia.event[mpos].id();
+    int mstatus = pythia.event[mpos].status();
+
+    //if(thismu==13 && (status == -51 || status == -52 || status == -23) && mstatus != status) {
+    if(id*ch==13 && statusHepMC == 2){
+       electron.SetPtEtaPhiM(pt,eta,phi,m);
+       //cout << "random number: " << rcharge;
+       thismu=id*ch;
+       idmu=id;
+       //eE.fill(electron.E());
+       int did = ch*11;
+       if(did == 11) E_e->push_back(electron.E());
+       if(did == -11) E_p->push_back(electron.E());
+       //std::cout << "Replacing this muon by an electron " << status << " id*ch " << thismu << " i " << i << " hepMC status " << statusHepMC << " id " << id << std::endl;
+    }
+
+    if (pythia.event[i].isFinal()) {
+
+      //if(mid==idmu) {std::cout << "Skipping this: " << id << std::endl;continue;}
+
+      if (idAbs == 22){
+           eGamma.fill(eI);
+           E_g->push_back((float)eI);
+      }
+      else if (idAbs == 11){
+          eE.fill(eI);
+          if(id == 11) E_e->push_back((float)eI);
+          if(id == -11) E_p->push_back((float)eI);
+      }
+      else if (id == -2212) {E_ap->push_back((float)eI); eP.fill(eI);/*std::cout << "Proton-antiproton found with energy of: " << (float)eI << " pdgId " << id << std::endl;*/ }
+      //else if (id == -2212) E_ap->push_back((float)eI);
+      else if (idAbs == 12 || idAbs == 14 || idAbs == 16) eNu.fill(eI);
+      else {
+        eRest.fill(eI);
+        //cout << " Error: stable id = " << pythia.event[i].id() << endl;
+      }
+    }
+    }
+
+  // End of event loop.
+  t->Fill();
+  }
+
+  // Final statistics and histograms.
+  pythia.stat();
+  cout << eGamma << eE << eP << eNu << eRest;
+
+  //cout << "Number of on-shell photon processes generated " << nEvents << endl;
+
+  //t->Write();
+  f->Write();
+  //f->Close();
+
+  // Done.
+  //delete sigma1GenRes;
+  return 0;
+}

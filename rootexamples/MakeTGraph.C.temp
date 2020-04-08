@@ -1,0 +1,198 @@
+#include <TTree.h>
+#include <TFile.h>
+#include <vector>
+#include <TH1.h>
+#include <TAxis.h>
+#include <TROOT.h>
+#include <TCanvas.h>
+#include <TLegend.h>
+#include <TStyle.h>
+
+#include <iostream>
+#include <sstream>
+#include <string>
+
+void MakePlots()
+{
+   gROOT->SetBatch(1);
+
+   TFile *f1=TFile::Open("outputs/Wtau_mG.root");
+   TFile *f2=TFile::Open("outputs/We_mG.root");
+   TFile *f3=TFile::Open("outputs/Wmu_mG.root");
+   TFile *f4=TFile::Open("outputs/Znu_mG.root");
+   TFile *f5=TFile::Open("outputs/Gammanu_mG.root");
+   TFile *f0=new TFile("outputs/combined_mG.root","recreate");
+
+   TH1F* h[19];
+   stringstream name;
+
+   for(int i=0;i<20;i++)
+   {
+      name << "h_" << i;
+      std::cout << name.str().c_str() << std::endl;
+      std::string temp = name.str();
+      h[i] = new TH1F(temp.c_str(),"Spectrum",100,0.1,100.0);
+      h[i]->Sumw2();
+      name.str("");
+   }
+
+   TTree *t1=(TTree*)f1->Get("t");
+   TTree *t2=(TTree*)f2->Get("t");
+   TTree *t3=(TTree*)f3->Get("t");
+   TTree *t4=(TTree*)f4->Get("t");
+   TTree *t5=(TTree*)f5->Get("t");
+
+   gStyle->SetOptStat(11111);
+
+   std::vector<float>* Ee1;
+   std::vector<float>* Ee2;
+   std::vector<float>* Ee3;
+   std::vector<float>* Ee4;
+   std::vector<float>* Ee5;
+
+   std::vector<float>* Ep1;
+   std::vector<float>* Ep2;
+   std::vector<float>* Ep3;
+   std::vector<float>* Ep4;
+   std::vector<float>* Ep5;
+
+   std::vector<float>* Eg1;
+   std::vector<float>* Eg2;
+   std::vector<float>* Eg3;
+   std::vector<float>* Eg4;
+   std::vector<float>* Eg5;
+
+   Ee1=0;Ee2=0;Ee3=0;Ee4=0;Ee5=0;
+   Ep1=0;Ep2=0;Ep3=0;Ep4=0;Ep5=0;
+   Eg1=0;Eg2=0;Eg3=0;Eg4=0;Eg5=0;
+
+   t1->SetBranchAddress("E_e",&Ee1);
+   t2->SetBranchAddress("E_e",&Ee2);
+   t3->SetBranchAddress("E_e",&Ee3);
+   t4->SetBranchAddress("E_e",&Ee4);
+   t5->SetBranchAddress("E_e",&Ee5);
+
+   t1->SetBranchAddress("E_p",&Ep1);
+   t2->SetBranchAddress("E_p",&Ep2);
+   t3->SetBranchAddress("E_p",&Ep3);
+   t4->SetBranchAddress("E_p",&Ep4);
+   t5->SetBranchAddress("E_p",&Ep5); 
+
+   t1->SetBranchAddress("E_g",&Eg1);
+   t2->SetBranchAddress("E_g",&Eg2);
+   t3->SetBranchAddress("E_g",&Eg3);
+   t4->SetBranchAddress("E_g",&Eg4);
+   t5->SetBranchAddress("E_g",&Eg5);
+
+   Int_t nEntries=t1->GetEntries();
+
+   for(int ientry=0;ientry<nEntries;ientry++)
+   {
+      t1->GetEntry(ientry);
+      t2->GetEntry(ientry);
+      t3->GetEntry(ientry);
+      t4->GetEntry(ientry);
+      t5->GetEntry(ientry);
+
+      for(int i=0;i<Ee1->size();i++){ h[0]->Fill(Ee1->at(i));}
+      for(int i=0;i<Ee2->size();i++){ h[1]->Fill(Ee2->at(i));}
+      for(int i=0;i<Ee3->size();i++){ h[2]->Fill(Ee3->at(i));}
+      for(int i=0;i<Ee4->size();i++){ h[3]->Fill(Ee4->at(i));}
+      for(int i=0;i<Ee5->size();i++){ h[4]->Fill(Ee5->at(i));}
+
+      for(int i=0;i<Ep1->size();i++){ h[5]->Fill(Ep1->at(i));}
+      for(int i=0;i<Ep2->size();i++){ h[6]->Fill(Ep2->at(i));}
+      for(int i=0;i<Ep3->size();i++){ h[7]->Fill(Ep3->at(i));}
+      for(int i=0;i<Ep4->size();i++){ h[8]->Fill(Ep4->at(i));}
+      for(int i=0;i<Ep5->size();i++){ h[9]->Fill(Ep5->at(i));}
+
+      for(int i=0;i<Eg1->size();i++){ h[10]->Fill(Eg1->at(i));}
+      for(int i=0;i<Eg2->size();i++){ h[11]->Fill(Eg2->at(i));}
+      for(int i=0;i<Eg3->size();i++){ h[12]->Fill(Eg3->at(i));}
+      for(int i=0;i<Eg4->size();i++){ h[13]->Fill(Eg4->at(i));}
+      for(int i=0;i<Eg5->size();i++){ h[14]->Fill(Eg5->at(i));}
+
+   }
+
+   // Combined result for electrons   
+   h[0]->Scale(tauW);
+   h[0]->Add(h[1],eW);
+   h[0]->Add(h[2],muW);
+   h[0]->Add(h[3],nuZ);
+   h[0]->Add(h[4],Gnu);
+
+   // Combined result for positrons
+   h[5]->Scale(tauW);
+   h[5]->Add(h[6],eW);
+   h[5]->Add(h[7],muW);
+   h[5]->Add(h[8],nuZ);
+   h[5]->Add(h[9],Gnu);
+
+   // Combined result for photons
+   h[10]->Scale(tauW);
+   h[10]->Add(h[11],eW);
+   h[10]->Add(h[12],muW);
+   h[10]->Add(h[13],nuZ);
+   h[10]->Add(h[14],Gnu);
+
+
+   //Float_t Norm=(float)h0->Integral();
+   Float_t Norm_e =(float)h[0]->GetEntries();
+   Float_t Norm_p =(float)h[5]->GetEntries();
+   Float_t Norm_g =(float)h[10]->GetEntries();
+
+   //cout<<Norm<<endl;
+
+   h[0]->Scale(1./Norm_e);
+   h[5]->Scale(1./Norm_p);
+   h[10]->Scale(1./Norm_g);
+
+   TCanvas *c=new TCanvas("c","",1000,1000,1000,1000);
+
+   c->SetLogx();
+   c->SetLogy();
+
+   h[0]->GetYaxis()->SetRangeUser(1e-6,1);
+   h[0]->GetXaxis()->SetTitle("E (GeV)");
+   h[0]->GetYaxis()->SetTitle("#frac{dN_{e^{-}}}{dE}");
+   h[0]->SetMarkerStyle(8);
+   h[0]->SetTitleOffset(1.5,"Y");
+   h[0]->Draw();
+   c->SaveAs("outputs/plot_elec_n_mG.pdf");
+
+   c->Modified();
+   c->Update();
+
+   h[5]->GetYaxis()->SetRangeUser(1e-6,1);
+   h[5]->GetXaxis()->SetTitle("E (GeV)");
+   h[5]->GetYaxis()->SetTitle("#frac{dN_{e^{+}}}{dE}");
+   h[5]->SetMarkerStyle(8);
+   h[5]->SetTitleOffset(1.5,"Y");
+   h[5]->Draw();
+   c->SaveAs("outputs/plot_pos_n_mG.pdf");
+
+   c->Modified();
+   c->Update();
+
+   h[10]->GetYaxis()->SetRangeUser(1e-6,1);
+   h[10]->GetXaxis()->SetTitle("E (GeV)");
+   h[10]->GetYaxis()->SetTitle("#frac{dN_{#gamma}}{dE}");
+   h[10]->SetMarkerStyle(8);
+   h[10]->SetTitleOffset(1.5,"Y");
+   h[10]->Draw();
+   c->SaveAs("outputs/plot_gamma_n_mG.pdf");
+
+   c->Modified();
+   c->Update();
+
+   h[0]->Write();
+   h[5]->Write();
+   h[10]->Write();
+
+   f0->Write();
+   f0->Close();
+
+
+}
+
+
